@@ -5140,10 +5140,10 @@ series_query_services(void *arg)
 	    baton->error = -ENOTSUP;
 	else
 	    baton->slots = data->slots =
-		keySlotsConnect(
+		&(keySlotsConnect(
 		    data->config, 1, baton->info,
 		    series_query_end_phase, baton->userdata,
-		    data->events, (void *)baton);
+		    data->events, (void *)baton))->slots;
     }
 }
 
@@ -6165,10 +6165,10 @@ series_lookup_services(void *arg)
 	    baton->error = -ENOTSUP;
 	else
 	    baton->slots = data->slots =
-		keySlotsConnect(
+		&(keySlotsConnect(
 		    data->config, 1, baton->info,
 		    series_query_end_phase, baton->userdata,
-		    data->events, (void *)baton);
+		    data->events, (void *)baton))->slots;
     }
 }
 
