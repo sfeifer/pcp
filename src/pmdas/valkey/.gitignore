@@ -1,0 +1,7 @@
+pmda_valkey.so
+pmdavalkey
+*.o
+*.log
+domain.h
+help.dir
+help.pag

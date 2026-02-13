@@ -20,11 +20,11 @@ include $(TOPDIR)/src/include/builddefs
 INIH_HFILES = ini.h
 USDT_HFILES = usdt.h
 VENDORED_HFILES = $(INIH_HFILES) $(USDT_HFILES)
-LIBVALKEY_HFILES = sds.h sdsalloc.h dict.h
+LIBVALKEY_HFILES = sds.h sdsalloc.h dict.h valkey.h read.h alloc.h visibility.h
 HFILES = pmapi.h impl.h pmda.h pmtime.h pmdaroot.h pmafm.h \
 	 trace.h trace_dev.h mmv_stats.h mmv_dev.h import.h \
 	 pmjson.h pmhttp.h pmdbg.h pmwebapi.h deprecated.h \
-	 ini.h sds.h dict.h archive.h
+	 ini.h sds.h dict.h archive.h valkey.h read.h alloc.h visibility.h
 INFILES = config.h.in platform_defs.h.in
 CONFFILES = config.h platform_defs.h
 ifeq "$(ENABLE_MULTILIB)" "true"
@@ -44,8 +44,10 @@ default_pcp : $(HEADERS) $(GENERATED_HFILES) $(VENDORED_HFILES) $(LIBVALKEY_HFIL
 
 include $(BUILDRULES)
 
-$(LIBVALKEY_HFILES):
+sds.h sdsalloc.h dict.h:
 	$(LN_S) -f $(TOPDIR)/vendor/github.com/valkey-io/libvalkey/src/$@ .
+valkey.h read.h alloc.h visibility.h:
+	$(LN_S) -f $(TOPDIR)/vendor/github.com/valkey-io/libvalkey/include/valkey/$@ .
 $(INIH_HFILES):
 	$(LN_S) -f $(TOPDIR)/vendor/github.com/benhoyt/inih/$@ .
 $(USDT_HFILES):

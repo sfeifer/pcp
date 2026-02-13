@@ -1,0 +1,77 @@
+/*
+ * Metrics for Valkey PMDA
+ */
+
+valkey {
+    valkey_version			VALKEY:0:0
+    valkey_git_sha1			VALKEY:0:1
+    valkey_git_dirty			VALKEY:0:2
+    valkey_build_id			VALKEY:0:3
+    valkey_mode			VALKEY:0:4
+    os				VALKEY:0:5
+    arch_bits			VALKEY:0:6
+    multiplexing_api		VALKEY:0:7
+    gcc_version			VALKEY:0:8
+    process_id			VALKEY:0:9
+    run_id				VALKEY:0:10
+    tcp_port			VALKEY:0:11
+    uptime_in_seconds		VALKEY:0:12
+    uptime_in_days		VALKEY:0:13
+    hz				VALKEY:0:14
+    lru_clock			VALKEY:0:15
+    config_file			VALKEY:0:16
+    connected_clients		VALKEY:0:17
+    client_longest_output_list	VALKEY:0:18
+    client_biggest_input_buf	VALKEY:0:19
+    blocked_clients		VALKEY:0:20
+    used_memory			VALKEY:0:21
+    used_memory_human		VALKEY:0:22
+    used_memory_rss			VALKEY:0:23
+    used_memory_peak		VALKEY:0:24
+    used_memory_peak_human		VALKEY:0:25
+    used_memory_lua			VALKEY:0:26
+    mem_fragmentation_ratio	VALKEY:0:27
+    mem_allocator		VALKEY:0:28
+    loading			VALKEY:0:29
+    rdb_changes_since_last_save	VALKEY:0:30
+    rdb_bgsave_in_progress	VALKEY:0:31
+    rdb_last_save_time		VALKEY:0:32
+    rdb_last_bgsave_status	VALKEY:0:33
+    rdb_last_bgsave_time_sec	VALKEY:0:34
+    rdb_current_bgsave_time_sec	VALKEY:0:35
+    aof_enabled			VALKEY:0:36
+    aof_rewrite_in_progress	VALKEY:0:37
+    aof_rewrite_scheduled	VALKEY:0:38
+    aof_last_rewrite_time_sec	VALKEY:0:39
+    aof_current_rewrite_time_sec VALKEY:0:40
+    aof_last_bgrewrite_status	VALKEY:0:41
+    aof_last_write_status	VALKEY:0:42
+    total_connections_received	VALKEY:0:43
+    total_commands_processed	VALKEY:0:44
+    instantaneous_ops_per_sec	VALKEY:0:45
+    rejected_connections	VALKEY:0:46
+    sync_full			VALKEY:0:47
+    sync_partial_ok		VALKEY:0:48
+    sync_partial_err		VALKEY:0:49
+    expired_keys		VALKEY:0:50
+    evicted_keys		VALKEY:0:51
+    keyspace_hits		VALKEY:0:52
+    keyspace_misses		VALKEY:0:53
+    pubsub_channels		VALKEY:0:54
+    pubsub_patterns		VALKEY:0:55
+    latest_fork_usec		VALKEY:0:56
+    role			VALKEY:0:57
+    connected_slaves		VALKEY:0:58
+    master_repl_offset	VALKEY:0:59
+    repl_backlog_active		VALKEY:0:60
+    repl_backlog_size		VALKEY:0:61
+    repl_backlog_first_byte_offset VALKEY:0:62
+    repl_backlog_histlen	VALKEY:0:63
+    used_cpu_sys		VALKEY:0:64
+    used_cpu_user		VALKEY:0:65
+    used_cpu_sys_children	VALKEY:0:66
+    used_cpu_user_children	VALKEY:0:67
+    db_keys			VALKEY:0:68
+    db_expires			VALKEY:0:69
+    db_avg_ttl			VALKEY:0:70
+}

@@ -1,0 +1,83 @@
+#
+# Valkey PMDA help file in the ASCII format
+#
+
+@ VALKEY.0 Instance domain for Valkey servers
+Each instance represents a Valkey server configured in valkey.conf
+with host=hostname:port entries.
+
+@ VALKEY.1 Instance domain for Valkey databases
+Each instance represents a database (db0, db1, etc.) reported by the
+Valkey server INFO command.
+
+@ valkey.valkey_version Version of the Valkey server
+@ valkey.valkey_git_sha1 Git SHA1
+@ valkey.valkey_git_dirty Git dirty flag
+@ valkey.valkey_build_id Build ID
+@ valkey.valkey_mode Server mode (standalone, cluster, sentinel)
+@ valkey.os Operating system
+@ valkey.arch_bits Architecture bit size (32 or 64)
+@ valkey.multiplexing_api Event loop mechanism
+@ valkey.gcc_version GCC compiler version
+@ valkey.process_id Process ID of the Valkey server
+@ valkey.run_id Random value identifying the server
+@ valkey.tcp_port TCP/IP listen port
+@ valkey.uptime_in_seconds Number of seconds since server start
+@ valkey.uptime_in_days Number of days since server start
+@ valkey.hz Server frequency
+@ valkey.lru_clock LRU clock for cache management
+@ valkey.config_file Configuration file path
+@ valkey.connected_clients Number of connected clients
+@ valkey.client_longest_output_list Longest output list among clients
+@ valkey.client_biggest_input_buf Biggest input buffer among clients
+@ valkey.blocked_clients Number of blocked clients
+@ valkey.used_memory Total bytes allocated by Valkey
+@ valkey.used_memory_human Human readable memory usage
+@ valkey.used_memory_rss Memory allocated by OS (RSS)
+@ valkey.used_memory_peak Peak memory consumed
+@ valkey.used_memory_peak_human Human readable peak memory
+@ valkey.used_memory_lua Memory used by Lua engine
+@ valkey.mem_fragmentation_ratio Ratio between RSS and used memory
+@ valkey.mem_allocator Memory allocator used
+@ valkey.loading Loading dump file flag
+@ valkey.rdb_changes_since_last_save Changes since last save
+@ valkey.rdb_bgsave_in_progress Background save in progress flag
+@ valkey.rdb_last_save_time Timestamp of last successful save
+@ valkey.rdb_last_bgsave_status Status of last save operation
+@ valkey.rdb_last_bgsave_time_sec Duration of last save in seconds
+@ valkey.rdb_current_bgsave_time_sec Duration of current save in seconds
+@ valkey.aof_enabled AOF logging enabled flag
+@ valkey.aof_rewrite_in_progress AOF rewrite in progress flag
+@ valkey.aof_rewrite_scheduled AOF rewrite scheduled flag
+@ valkey.aof_last_rewrite_time_sec Duration of last AOF rewrite
+@ valkey.aof_current_rewrite_time_sec Duration of current AOF rewrite
+@ valkey.aof_last_bgrewrite_status Status of last AOF rewrite
+@ valkey.aof_last_write_status Status of last AOF write
+@ valkey.total_connections_received Total connections accepted
+@ valkey.total_commands_processed Total commands processed
+@ valkey.instantaneous_ops_per_sec Commands processed per second
+@ valkey.rejected_connections Connections rejected due to maxclients
+@ valkey.sync_full Full synchronizations performed
+@ valkey.sync_partial_ok Successful partial synchronizations
+@ valkey.sync_partial_err Failed partial synchronizations
+@ valkey.expired_keys Total key expiration events
+@ valkey.evicted_keys Keys evicted due to maxmemory
+@ valkey.keyspace_hits Successful key lookups
+@ valkey.keyspace_misses Failed key lookups
+@ valkey.pubsub_channels Number of pub/sub channels
+@ valkey.pubsub_patterns Number of pub/sub patterns
+@ valkey.latest_fork_usec Duration of latest fork in microseconds
+@ valkey.role Replication role (master or replica)
+@ valkey.connected_slaves Number of connected replicas
+@ valkey.master_repl_offset Master replication offset
+@ valkey.repl_backlog_active Replication backlog active flag
+@ valkey.repl_backlog_size Replication backlog size
+@ valkey.repl_backlog_first_byte_offset First byte offset in backlog
+@ valkey.repl_backlog_histlen Replication backlog history length
+@ valkey.used_cpu_sys System CPU consumed by server
+@ valkey.used_cpu_user User CPU consumed by server
+@ valkey.used_cpu_sys_children System CPU consumed by background processes
+@ valkey.used_cpu_user_children User CPU consumed by background processes
+@ valkey.db_keys Number of keys in the database
+@ valkey.db_expires Number of keys with an expiration
+@ valkey.db_avg_ttl Average time to live for keys in milliseconds

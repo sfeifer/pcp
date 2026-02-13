@@ -294,3 +294,10 @@ PCP_WEB_1.23 {
     dictSetVal;
     keySlotsContextFree;
 } PCP_WEB_1.22;
+
+PCP_WEB_1.24 {
+    valkeyConnectWithTimeout;
+    valkeyCommand;
+    valkeyFree;
+    freeReplyObject;
+} PCP_WEB_1.23;

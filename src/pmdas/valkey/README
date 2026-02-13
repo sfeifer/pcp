@@ -1,0 +1,88 @@
+Valkey PMDA
+===========
+
+This PMDA collects performance metrics from Valkey servers using the INFO
+command via the libvalkey library. Valkey is a high-performance data structure
+server that is a fork of Redis, maintaining protocol compatibility.
+
+Metrics
+=======
+
+The PMDA exports the following metric groups:
+
+* valkey.server.*      - Server information (version, mode, uptime, etc.)
+* valkey.clients.*     - Client connection statistics
+* valkey.memory.*      - Memory usage metrics
+* valkey.stats.*       - Command and network statistics
+* valkey.replication.* - Replication role and status
+* valkey.cpu.*         - CPU usage
+
+Each metric is available per-instance, where instances represent individual
+Valkey servers configured in the configuration file.
+
+Configuration
+=============
+
+The configuration file is located at:
+    $PCP_SYSCONF_DIR/valkey/valkey.conf
+
+Add one or more Valkey servers using the following format:
+
+    host=hostname:port
+
+For example:
+    host=localhost:6379
+    host=localhost:6380
+    host=192.168.1.10:6379
+
+Multiple instances can be configured by adding multiple host= lines.
+
+Installation
+============
+
+ +  # cd $PCP_PMDAS_DIR/valkey
+
+ +  Check that there is no clash in the Performance Metrics Domain
+    defined in ./domain.h and the other PMDAs currently in use
+    (see $PCP_PMCDCONF_PATH). If there is, edit ./domain.h to choose
+    another domain number.
+
+ +  Then simply use
+
+        # ./Install
+
+    and choose both the "collector" and "monitor" installation
+    configuration options.
+
+De-installation
+===============
+
+ +  Simply use
+
+        # cd $PCP_PMDAS_DIR/valkey
+        # ./Remove
+
+Requirements
+============
+
+The PMDA requires:
+* libvalkey - Valkey client library (vendored in PCP source tree)
+* Access to Valkey server(s) via TCP/IP
+
+The Valkey servers must allow connections from the host running the PMDA.
+No authentication is currently supported.
+
+Troubleshooting
+===============
+
+ +  After installing or restarting the agent, the PMCD log file
+    ($PCP_LOG_DIR/pmcd/pmcd.log) and the PMDA log file
+    ($PCP_LOG_DIR/pmcd/valkey.log) should be checked for any warnings
+    or errors.
+
+ +  Check that Valkey is running and accessible:
+        $ telnet hostname port
+        > INFO
+        (should display server information)
+
+ +  Verify the configuration file syntax is correct

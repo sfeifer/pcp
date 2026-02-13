@@ -2100,6 +2100,19 @@ Requires: pcp = @package_version@ pcp-libs = @package_version@
 This package contains the PCP Performance Metrics Domain Agent (PMDA) for
 collecting metrics about web server logs.
 # end pcp-pmda-weblog
+
+#
+# pcp-pmda-valkey
+#
+%package pmda-valkey
+License: GPL-2.0-or-later
+Summary: Performance Co-Pilot (PCP) metrics for Valkey
+URL: https://pcp.io
+Requires: pcp = @package_version@ pcp-libs = @package_version@
+%description pmda-valkey
+This package contains the PCP Performance Metrics Domain Agent (PMDA) for
+collecting metrics from Valkey servers (valkey.io).
+# end pcp-pmda-valkey
 # end C pmdas
 
 %if "@pmda_amdgpu@" == "true"
@@ -2394,6 +2407,7 @@ basic_manifest | keep '(etc/pcp|pmdas)/systemd(/|$)' >pcp-pmda-systemd-files
 basic_manifest | keep '(etc/pcp|pmdas)/trace(/|$)' >pcp-pmda-trace-files
 basic_manifest | keep '(etc/pcp|pmdas)/unbound(/|$)' >pcp-pmda-unbound-files
 basic_manifest | keep '(etc/pcp|pmdas)/uwsgi(/|$)' >pcp-pmda-uwsgi-files
+basic_manifest | keep '(etc/pcp|pmdas)/valkey(/|$)' >pcp-pmda-valkey-files
 basic_manifest | keep '(etc/pcp|pmdas)/weblog(/|$)' >pcp-pmda-weblog-files
 basic_manifest | keep '(etc/pcp|pmdas)/zimbra(/|$)' >pcp-pmda-zimbra-files
 basic_manifest | keep '(etc/pcp|pmdas)/zswap(/|$)' >pcp-pmda-zswap-files
@@ -2420,6 +2434,7 @@ for pmda_package in \
     sockets statsd summary systemd \
     unbound uwsgi \
     trace \
+    valkey \
     weblog \
     zimbra zswap ; \
 do \
@@ -2926,6 +2941,9 @@ done
 %preun pmda-weblog
 %{pmda_remove "$1" "weblog"}
 
+%preun pmda-valkey
+%{pmda_remove "$1" "valkey"}
+
 %preun pmda-denki
 %{pmda_remove "$1" "denki"}
 
@@ -3286,6 +3304,8 @@ fi
 %files pmda-trace -f pcp-pmda-trace-files.rpm
 
 %files pmda-weblog -f pcp-pmda-weblog-files.rpm
+
+%files pmda-valkey -f pcp-pmda-valkey-files.rpm
 
 %if "@have_python@" == "true"
 %files import-pmseries -f pcp-import-pmseries-files.rpm
