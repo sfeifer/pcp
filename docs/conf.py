@@ -6,6 +6,25 @@
 # full list see the documentation:
 # http://www.sphinx-doc.org/
 
+# -- Compatibility fix -------------------------------------------------------
+# sphinx-mdinclude generates named hyperlinks (`text <url>`_) which break
+# inside sphinxcontrib-httpdomain directives. Wrap the converter to:
+#   1. Use anonymous links (`__`) to avoid named-target conflicts.
+#   2. Escape any `(` immediately following `__` (e.g. man page suffixes like
+#      `(1)`) so docutils recognises the end of the hyperlink reference.
+import re
+import sphinx_mdinclude as _sphinx_mdinclude
+
+_orig_convert = _sphinx_mdinclude.convert
+
+def _fixed_convert(text):
+    result = _orig_convert(text)
+    result = re.sub(r'(`[^`\n]+<[^>\n]+>`)_\b', r'\1__', result)
+    result = re.sub(r'>`__\(', r'>`__\\(', result)
+    return result
+
+_sphinx_mdinclude.convert = _fixed_convert
+
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -41,7 +60,6 @@ with open('../VERSION.pcp') as f:
 # ones.
 extensions = [
     'sphinx.ext.autosectionlabel',
-    'sphinxcontrib.redoc',
     'sphinxcontrib.openapi',
 ]
 
@@ -81,19 +99,6 @@ pygments_style = None
 html_theme = 'sphinx_rtd_theme'
 
 html_logo = '../images/pcp_icon.png'
-
-redoc = [
-    {
-        'name': 'PMWEBAPI',
-        'page': 'api/index',
-        'spec': 'specs/openapi.yaml',
-        'opts': {
-            'lazy-rendering': True,
-        },
-    },
-]
-
-redoc_uri = 'https://cdn.jsdelivr.net/npm/redoc@next/bundle/redoc.standalone.js'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

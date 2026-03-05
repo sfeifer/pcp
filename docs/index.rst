@@ -30,7 +30,7 @@ PCP is a feature-rich, mature, extensible, cross-platform toolkit supporting bot
    PG/AboutProgrammersGuide
    HowTos/nix/index
    HowTos/scaling/index
-   REST API Specification <https://pcp.readthedocs.io/en/latest/api/>
+   REST API Specification <api/index>
 
 .. toctree::
    :caption: Quick Guides
