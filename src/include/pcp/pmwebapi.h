@@ -485,16 +485,6 @@ typedef struct pmSearchMetrics {
     unsigned long long	docs;		/* number of documents */
     unsigned long long	terms;		/* number of distinct terms */
     unsigned long long	records;	/* number of search records */
-    double		inverted_sz_mb;
-    double		inverted_cap_mb;
-    double		inverted_cap_ovh;
-    double		offset_vectors_sz_mb;
-    double		skip_index_size_mb;
-    double		score_index_size_mb;
-    double		records_per_doc_avg;
-    double		bytes_per_record_avg;
-    double		offsets_per_term_avg;
-    double		offset_bits_per_record_avg;
 } pmSearchMetrics;
 
 typedef void (*pmSearchSetupCallBack)(void *);

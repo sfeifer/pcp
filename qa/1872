@@ -117,14 +117,8 @@ _filter_date()
 
 _filter_info()
 {
-    # These change slightly accross runs.
-    # I assume that they are affected by different order of indexing of each
-    # record which may build underlying key server data structures differently
     sed \
-	-e 's/\(\"records\":\).*/\1 XXX,/g' \
-	-e 's/\(\"bytes_per_record_avg\":\).*/\1 XXX,/g' \
-	-e 's/\(\"records_per_doc_avg\":\).*/\1 XXX,/g' \
-	-e 's/\(\"offsets_per_term_avg\":\).*/\1 XXX,/g' \
+	-e 's/\(\"records\":\).*/\1 XXX/g' \
     #end
 }
 

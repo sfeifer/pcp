@@ -94,28 +94,16 @@ on_search_metrics(pmSearchMetrics *metrics, void *arg)
 	on = off = "";
     }
 
-    printf("RediSearch statistics:\n");
+    /*
+     * ValkeySearch 1.2 FT.INFO only reports docs, terms, and records.
+     * RediSearch also reported inverted index sizes, skip/score index
+     * sizes, and per-record/per-term averages.  Restore if ValkeySearch
+     * adds these metrics.
+     */
+    printf("ValkeySearch statistics:\n");
     printf("    Documents: %s%llu%s\n", on, metrics->docs, off);
     printf("        Terms: %s%llu%s\n", on, metrics->terms, off);
     printf("      Records: %s%llu%s\n", on, metrics->records, off);
-    printf("- Average records per doc: %s%.2f%s\n",
-		    on, metrics->records_per_doc_avg, off);
-    printf("- Average bytes per record: %s%.2f%s\n",
-		    on, metrics->bytes_per_record_avg, off);
-    printf("- Inverted Index\n");
-    printf("         Size: %s%.2f MB%s\n", on, metrics->inverted_sz_mb, off);
-    printf("     Capacity: %s%.2f MB%s\n", on, metrics->inverted_cap_mb, off);
-    printf("     Overhead: %s%.2f%s\n", on, metrics->inverted_cap_ovh, off);
-    printf("- Skip Index\n");
-    printf("         Size: %s%.2f MB%s\n",
-		    on, metrics->skip_index_size_mb, off);
-    printf("- Score Index\n");
-    printf("         Size: %s%.2f MB%s\n",
-		    on, metrics->score_index_size_mb, off);
-    printf("- Average offsets per term: %s%.2f%s\n",
-		    on, metrics->offsets_per_term_avg, off);
-    printf("- Average offset bits per record: %s%.2f%s\n",
-		    on, metrics->offset_bits_per_record_avg, off);
 }
 
 /*
@@ -227,8 +215,8 @@ pmsearch_overrides(int opt, pmOptions *opts)
 static pmLongOptions longopts[] = {
     PMAPI_OPTIONS_HEADER("Connection Options"),
     { "config", 1, 'c', "FILE", "configuration file path"},
-    { "host", 1, 'h', "HOST", "connect to Redis using given host name" },
-    { "port", 1, 'p', "PORT", "connect to Redis using given TCP/IP port" },
+    { "host", 1, 'h', "HOST", "connect to key server using given host name" },
+    { "port", 1, 'p', "PORT", "connect to key server using given TCP/IP port" },
     PMAPI_OPTIONS_HEADER("General Options"),
     { "no-colour", 0, 'C', 0, "no highlighting in results text" },
     { "docid", 0, 'd', 0, "report document ID of each result" },
@@ -420,7 +408,7 @@ main(int argc, char *argv[])
     } else {
 	/*
 	 * Push command line options into the configuration, and ensure
-	 * we have some default for attemping Redis server connections.
+	 * we have some default for attemping key server connections.
 	 */
 	if ((pmIniFileLookup(config, "pmsearch", "count")) == NULL ||
 	    (search_count > 0)) {

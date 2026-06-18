@@ -1485,7 +1485,7 @@ keysSchemaLoad(keySlots *slots, keySlotsFlags flags,
 	baton->phases[i++].func = keys_load_version; /* v5 */
 	baton->phases[i++].func = keys_load_series_version;
     }
-    /* Register the pmsearch schema with RediSearch if needed */
+    /* Register the pmsearch schema with ValkeySearch if needed */
     if (flags & SLOTS_SEARCH) {
 	/* if we got a route update means we are in cluster mode */
 	if (slots->acc && slots->acc->cc.route_version > 0) {

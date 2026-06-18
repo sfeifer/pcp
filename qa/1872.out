@@ -101,14 +101,14 @@ pmseries: [Info] processed 4 archive records from PATH/archives/sample-labels
             "name": "29.1",
             "type": "indom",
             "indom": "29.1",
-            "oneline": "Instance <b>domain</b> \"colour\" for sample PMDA",
+            "oneline": "Instance domain \"colour\" for sample PMDA",
             "helptext": "Universally 3 instances, \"red\" (0), \"green\" (1) and \"blue\" (3)."
         },
         {
             "name": "29.3",
             "type": "indom",
             "indom": "29.3",
-            "oneline": "Instance <b>domain</b> \"mirage\" for sample PMDA",
+            "oneline": "Instance domain \"mirage\" for sample PMDA",
             "helptext": "Random number of instances, that change with time.  Instance \"m-00\" (0)\nis always present, while the others are numbered 1 .. 49 and named \"m-01\"\n.. \"m-99\""
         }
     ]
@@ -121,21 +121,21 @@ pmseries: [Info] processed 4 archive records from PATH/archives/sample-labels
     "limit": 10,
     "results": [
         {
-            "name": "<b>sample</b>.mirage",
+            "name": "sample.mirage",
             "type": "metric",
             "indom": "29.3",
             "oneline": "Simple saw-tooth rate, but instances come and go",
             "helptext": "The metric is a rate (Kbytes/sec) that varies in a saw-tooth distribution\nover time.  Different instances of the metric have different baselines\nfor the saw-tooth, but all have an max-to-min range of 100.\n\nWhat makes this metric interesting is that instances come and go although\nnot more often than once every 10 seconds by default.  Use pmstore to\nchange sample.controller.mirage and the frequency of instance domain\nchanges can be varied.\n\nInstance 0 is always present, but the other instances 1 thru 49 come\nand go in a cyclic pattern with a large random component influencing\nwhen each instance appears and disappears.\n\nThe underlying counter starts at 0 and is incremented once\nfor each pmFetch() to this metric and/or sample.colour and/or\nsample.mirage_longlong.\n\nUse pmStore() to modify the underlying counter (independent of which\ninstance or instances are used)."
         },
         {
-            "name": "<b>sample</b>.colour",
+            "name": "sample.colour",
             "type": "metric",
             "indom": "29.1",
             "oneline": "Metrics with a \"saw-tooth\" trend over time",
             "helptext": "This metric has 3 instances, designated \"red\", \"green\" and \"blue\".\n\nThe value of the metric is monotonic increasing in the range N to\nN+100, then back to N.  The different instances have different N\nvalues, namely 100 (red), 200 (green) and 300 (blue).\n\nThe underlying counter starts at 0 and is incremented once\nfor each pmFetch() to this metric and/or sample.mirage and/or\nsample.mirage_longlong.\n\nUse pmStore() to modify the underlying counter (independent of which\ninstance or instances are used)."
         },
         {
-            "name": "<b>sample</b>.rapid",
+            "name": "sample.rapid",
             "type": "metric",
             "indom": "none",
             "oneline": "count very quickly",
@@ -169,21 +169,21 @@ pmseries: [Info] processed 4 archive records from PATH/archives/sample-labels
             "type": "metric",
             "indom": "29.1",
             "oneline": "Metrics with a \"saw-tooth\" trend over time",
-            "helptext": "This metric has 3 instances, designated \"red\", \"green\" and \"blue\".\n\nThe value of the metric is monotonic increasing in the range N to\nN+100, then back to N.  The different instances have different N\nvalues, namely 100 (red), 200 (green) and 300 (blue).\n\nThe underlying <b>counter</b> starts at 0 and is incremented once\nfor each pmFetch() to this metric and/or sample.mirage and/or\nsample.mirage_longlong.\n\nUse pmStore() to modify the underlying <b>counter</b> (independent of which\ninstance or instances are used)."
+            "helptext": "This metric has 3 instances, designated \"red\", \"green\" and \"blue\".\n\nThe value of the metric is monotonic increasing in the range N to\nN+100, then back to N.  The different instances have different N\nvalues, namely 100 (red), 200 (green) and 300 (blue).\n\nThe underlying counter starts at 0 and is incremented once\nfor each pmFetch() to this metric and/or sample.mirage and/or\nsample.mirage_longlong.\n\nUse pmStore() to modify the underlying counter (independent of which\ninstance or instances are used)."
         },
         {
             "name": "sample.mirage",
             "type": "metric",
             "indom": "29.3",
             "oneline": "Simple saw-tooth rate, but instances come and go",
-            "helptext": "The metric is a rate (Kbytes/sec) that varies in a saw-tooth distribution\nover time.  Different instances of the metric have different baselines\nfor the saw-tooth, but all have an max-to-min range of 100.\n\nWhat makes this metric interesting is that instances come and go although\nnot more often than once every 10 seconds by default.  Use pmstore to\nchange sample.controller.mirage and the frequency of instance domain\nchanges can be varied.\n\nInstance 0 is always present, but the other instances 1 thru 49 come\nand go in a cyclic pattern with a large random component influencing\nwhen each instance appears and disappears.\n\nThe underlying <b>counter</b> starts at 0 and is incremented once\nfor each pmFetch() to this metric and/or sample.colour and/or\nsample.mirage_longlong.\n\nUse pmStore() to modify the underlying <b>counter</b> (independent of which\ninstance or instances are used)."
+            "helptext": "The metric is a rate (Kbytes/sec) that varies in a saw-tooth distribution\nover time.  Different instances of the metric have different baselines\nfor the saw-tooth, but all have an max-to-min range of 100.\n\nWhat makes this metric interesting is that instances come and go although\nnot more often than once every 10 seconds by default.  Use pmstore to\nchange sample.controller.mirage and the frequency of instance domain\nchanges can be varied.\n\nInstance 0 is always present, but the other instances 1 thru 49 come\nand go in a cyclic pattern with a large random component influencing\nwhen each instance appears and disappears.\n\nThe underlying counter starts at 0 and is incremented once\nfor each pmFetch() to this metric and/or sample.colour and/or\nsample.mirage_longlong.\n\nUse pmStore() to modify the underlying counter (independent of which\ninstance or instances are used)."
         },
         {
             "name": "sample.rapid",
             "type": "metric",
             "indom": "none",
             "oneline": "count very quickly",
-            "helptext": "Base <b>counter</b> increments by 8*10^7 per fetch.  Result is 10 x base <b>counter</b>."
+            "helptext": "Base counter increments by 8*10^7 per fetch.  Result is 10 x base counter."
         }
     ]
 }
@@ -557,14 +557,5 @@ pmseries: [Info] processed 4 archive records from PATH/archives/sample-labels
 {
     "docs": 18,
     "terms": 174,
-    "records": XXX,
-    "records_per_doc_avg": XXX,
-    "bytes_per_record_avg": XXX,
-    "inverted_sz_mb": 0.00,
-    "inverted_cap_mb": 0.00,
-    "inverted_cap_ovh": 0.00,
-    "skip_index_size_mb": 0.00,
-    "score_index_size_mb": 0.00,
-    "offsets_per_term_avg": XXX,
-    "offset_bits_per_record_avg": 8.00
+    "records": XXX
 }

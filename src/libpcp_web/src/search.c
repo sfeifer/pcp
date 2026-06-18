@@ -73,10 +73,7 @@ keys_search_docid(const char *key, const char *type, const char *name)
 }
 
 
-/*
- * This issue isn't fixed in version of search module we are using, 
- * https://github.com/RediSearch/RediSearch/issues/748
- */
+/* default stopwords from the ValkeySearch full-text search module */
 static int
 keys_search_is_stopword(sds s)
 {
@@ -142,10 +139,7 @@ keys_search_text_prep(sds s, int min_length, char *prefix, char *suffix)
 	else if (suffix == NULL)
 	    formatted_result = sdscatfmt(formatted_result, "%s%S", prefix, tokens[i]);
 	else {
-    	    // Monkey patch for numbers in fuzzy search, not fixed in OSS version of RediSearch
-	    // https://github.com/RediSearch/RediSearch/issues/346
-	    // Lets just assume that if both prefix and suffix start with %,
-	    // fuzzy search formatting is intended (OSS RediSearch doesn't support LD > 1 anyway) 
+	    /* skip numeric tokens in fuzzy search (% prefix/suffix) */
 	    if (prefix[0] == '%' && suffix[0] == '%') {
 		non_digit_found = 0;
 		for (j = 0; j < token_len; j++) {
@@ -179,8 +173,10 @@ keys_search_text_add_callback(
     seriesGetContext	*context = &baton->pmapi;
     respReply		*reply = r;
 
-    checkStatusReplyOK(baton->info, baton->userdata, c, reply,
-		"%s: %s", FT_ADD, "search text add");
+    /* HSET returns an integer (number of new fields added) */
+    if (!(reply && reply->type == RESP_REPLY_INTEGER))
+	checkStatusReplyOK(baton->info, baton->userdata, c, reply,
+		    "%s: %s", RESP_HSET, "search text add");
     doneSeriesGetContext(context, "keys_search_text_add_callback");
 }
 
@@ -193,7 +189,6 @@ keys_search_text_add(keySlots *slots, pmSearchTextType type,
     seriesGetContext	*context = &baton->pmapi;
     unsigned int	length;
     const char		*typestr = pmSearchTextTypeStr(type);
-    char		buffer[8];
     sds			cmd, key, docid;
 
     seriesBatonCheckMagic(baton, MAGIC_LOAD, "keys_search_text_add");
@@ -204,14 +199,14 @@ keys_search_text_add(keySlots *slots, pmSearchTextType type,
     seriesBatonReference(context, "keys_search_text_add");
 
     /*
-     * FT.ADD pcp:text <docid> 1.0
-     *		REPLACE PARTIAL
-     *		PAYLOAD <type>
-     *		FIELDS NAME <name> TYPE <type>
+     * HSET pcp:text:<docid>
+     *		NAME <name> TYPE <type>
      *		[INDOM <indom>] [ONELINE <oneline>] [HELPTEXT <helptext>]
+     *
+     * ValkeySearch auto-indexes hash keys matching the prefix
+     * declared in FT.CREATE (pcp:text:).
      */
-    key = sdsnewlen(FT_TEXT_KEY, FT_TEXT_KEY_LEN);
-    length = 4 + 2 + 2 + 5;
+    length = 2 + 4;
     if (indom && *indom != '\0')
 	length += 2;
     if (oneline && *oneline != '\0')
@@ -220,21 +215,13 @@ keys_search_text_add(keySlots *slots, pmSearchTextType type,
 	length += 2;
     cmd = resp_command(length);
 
-    cmd = resp_param_str(cmd, FT_ADD, FT_ADD_LEN);
-    cmd = resp_param_str(cmd, FT_TEXT_KEY, FT_TEXT_KEY_LEN);
+    cmd = resp_param_str(cmd, RESP_HSET, RESP_HSET_LEN);
     docid = keys_search_docid(FT_TEXT_KEY, typestr, name);
-    cmd = resp_param_sds(cmd, docid);
+    key = sdscatfmt(sdsnewlen(FT_TEXT_KEY_PFX, FT_TEXT_KEY_PFX_LEN), "%S", docid);
     sdsfree(docid);
-    cmd = resp_param_str(cmd, "1", 1);
+    cmd = resp_param_sds(cmd, key);
+    sdsfree(key);
 
-    cmd = resp_param_str(cmd, FT_REPLACE, FT_REPLACE_LEN);
-    cmd = resp_param_str(cmd, FT_PARTIAL, FT_PARTIAL_LEN);
-
-    length = pmsprintf(buffer, sizeof(buffer), "%u", type);
-    cmd = resp_param_str(cmd, FT_PAYLOAD, FT_PAYLOAD_LEN);
-    cmd = resp_param_str(cmd, buffer, length);
-
-    cmd = resp_param_str(cmd, FT_FIELDS, FT_FIELDS_LEN);
     cmd = resp_param_str(cmd, FT_NAME, FT_NAME_LEN);
     cmd = resp_param_str(cmd, name, strlen(name));
     cmd = resp_param_str(cmd, FT_TYPE, FT_TYPE_LEN);
@@ -252,7 +239,6 @@ keys_search_text_add(keySlots *slots, pmSearchTextType type,
 	cmd = resp_param_str(cmd, helptext, strlen(helptext));
     }
 
-    sdsfree(key);
     keySlotsRequestFirstNode(slots, cmd, keys_search_text_add_callback, arg);
     sdsfree(cmd);
 }
@@ -317,7 +303,7 @@ pmSearchDiscoverInDom(pmDiscoverEvent *event, pmInResult *in, void *arg)
 
     /*
      * We have the indom and instances, has text been discovered yet?
-     * Not a problem if not as we use PARTIAL FT.ADD and subsequently
+     * Not a problem if not as HSET updates existing hash fields and
      * we will find the text via pmSearchDiscoverText.
      */
     pmUseContext(p->ctx);
@@ -383,39 +369,36 @@ keys_search_info_callback(
     int			i;
     sds			msg;
 
-    if (reply && reply->type == RESP_REPLY_ARRAY && reply->elements >= 30) {
+    /*
+     * ValkeySearch 1.2 FT.INFO returns fewer fields than RediSearch.
+     * Only num_docs, num_terms, and num_records are available.
+     * RediSearch also reported: inverted_sz_mb, inverted_cap_mb,
+     * inverted_cap_ovh, offset_vectors_sz_mb, skip_index_size_mb,
+     * score_index_size_mb, records_per_doc_avg, bytes_per_record_avg,
+     * offsets_per_term_avg, offset_bits_per_record_avg.
+     * Restore if ValkeySearch adds these metrics.
+     */
+    if (reply && reply->type == RESP_REPLY_ARRAY && reply->elements >= 4) {
 	for (i = 0; i < reply->elements-1; i++) {
 	    value = reply->element[i+1];
 	    child = reply->element[i];
-	    if (child->type != RESP_REPLY_STRING &&
-		value->type != RESP_REPLY_STRING)
+	    if (child->type != RESP_REPLY_STRING)
 		continue;
-	    else if (strcmp("num_docs", child->str) == 0)
-		metrics.docs = strtoull(value->str, NULL, 0);
-	    else if (strcmp("num_terms", child->str) == 0)
-		metrics.terms = strtoull(value->str, NULL, 0);
-	    else if (strcmp("num_records", child->str) == 0)
-		metrics.records = strtoull(value->str, NULL, 0);
-	    else if (strcmp("inverted_sz_mb", child->str) == 0)
-		metrics.inverted_sz_mb = strtod(value->str, NULL);
-	    else if (strcmp("inverted_cap_mb", child->str) == 0)
-		metrics.inverted_cap_mb = strtod(value->str, NULL);
-	    else if (strcmp("inverted_cap_ovh", child->str) == 0)
-		metrics.inverted_cap_ovh = strtod(value->str, NULL);
-	    else if (strcmp("offset_vectors_sz_mb", child->str) == 0)
-		metrics.offset_vectors_sz_mb = strtod(value->str, NULL);
-	    else if (strcmp("skip_index_size_mb", child->str) == 0)
-		metrics.skip_index_size_mb = strtod(value->str, NULL);
-	    else if (strcmp("score_index_size_mb", child->str) == 0)
-		metrics.score_index_size_mb = strtod(value->str, NULL);
-	    else if (strcmp("records_per_doc_avg", child->str) == 0)
-		metrics.records_per_doc_avg = strtod(value->str, NULL);
-	    else if (strcmp("bytes_per_record_avg", child->str) == 0)
-		metrics.bytes_per_record_avg = strtod(value->str, NULL);
-	    else if (strcmp("offsets_per_term_avg", child->str) == 0)
-		metrics.offsets_per_term_avg = strtod(value->str, NULL);
-	    else if (strcmp("offset_bits_per_record_avg", child->str) == 0)
-		metrics.offset_bits_per_record_avg = strtod(value->str, NULL);
+	    if (value->type == RESP_REPLY_STRING) {
+		if (strcmp("num_docs", child->str) == 0)
+		    metrics.docs = strtoull(value->str, NULL, 0);
+		else if (strcmp("num_terms", child->str) == 0)
+		    metrics.terms = strtoull(value->str, NULL, 0);
+		else if (strcmp("num_records", child->str) == 0)
+		    metrics.records = strtoull(value->str, NULL, 0);
+	    } else if (value->type == RESP_REPLY_INTEGER) {
+		if (strcmp("num_docs", child->str) == 0)
+		    metrics.docs = (unsigned long long)value->integer;
+		else if (strcmp("num_terms", child->str) == 0)
+		    metrics.terms = (unsigned long long)value->integer;
+		else if (strcmp("num_records", child->str) == 0)
+		    metrics.records = (unsigned long long)value->integer;
+	    }
 	}
 	baton->callbacks->on_metrics(&metrics, baton->userdata);
     } else {
@@ -471,22 +454,37 @@ pmSearchInfo(pmSearchSettings *settings, sds key, void *arg)
     return 0;
 }
 
+static pmSearchTextType
+keys_search_type_from_str(const char *str)
+{
+    if (strcmp(str, "metric") == 0)
+	return PM_SEARCH_TYPE_METRIC;
+    if (strcmp(str, "indom") == 0)
+	return PM_SEARCH_TYPE_INDOM;
+    if (strcmp(str, "instance") == 0)
+	return PM_SEARCH_TYPE_INST;
+    return PM_SEARCH_TYPE_UNKNOWN;
+}
+
+/*
+ * ValkeySearch FT.SEARCH response format (no WITHSCORES/WITHPAYLOADS):
+ * [total, key1, [field1, val1, ...], key2, [field1, val1, ...], ...]
+ *
+ * Score is always 0 because ValkeySearch 1.2 does not support
+ * WITHSCORES.  Restore if ValkeySearch adds support.
+ */
 static void
 extract_search_results(keysSearchBaton *baton,
 		unsigned int total, double timer, respReply *reply)
 {
     pmSearchTextResult	result;
-    respReply		*docid, *score, *payload, *array;
+    respReply		*docid, *array;
     int			i, j;
 
-    for (i = 1; i < reply->elements - 3; i += 4) {
+    for (i = 1; i < reply->elements - 1; i += 2) {
 	docid = reply->element[i];
-	score = reply->element[i+1];
-	payload = reply->element[i+2];
-	array = reply->element[i+3];
-	if (payload->type != RESP_REPLY_STRING ||
-	    score->type != RESP_REPLY_STRING ||
-	    docid->type != RESP_REPLY_STRING ||
+	array = reply->element[i+1];
+	if (docid->type != RESP_REPLY_STRING ||
 	    array->type != RESP_REPLY_ARRAY) {
 	    baton->error = -EPROTO;
 	    break;
@@ -495,9 +493,9 @@ extract_search_results(keysSearchBaton *baton,
 	memset(&result, 0, sizeof(result));
 	result.total = total;
 	result.timer = timer;
-	result.count = (i / 2) + 1;
+	result.count = ((i - 1) / 2) + 1;
 	result.docid = sdsnewlen(docid->str, docid->len);
-	result.score = strtod(score->str, NULL);	
+	result.score = 0;
 
 	for (j = 0; j < array->elements; j += 2) {
 	    respReply	*field = array->element[j];
@@ -518,8 +516,9 @@ extract_search_results(keysSearchBaton *baton,
 		result.oneline = sdsnewlen(value->str, value->len);
 	    else if (strcmp(field->str, FT_HELPTEXT) == 0)
 		result.helptext = sdsnewlen(value->str, value->len);
-	    else if (strcmp(field->str, FT_TYPE) == 0)
-		result.type = atoi(payload->str);
+	    else if (strcmp(field->str, FT_TYPE) == 0 &&
+		     value->type == RESP_REPLY_STRING)
+		result.type = keys_search_type_from_str(value->str);
 	}
 	if (baton->error == 0)
 	    baton->callbacks->on_text_result(&result, baton->userdata);
@@ -578,7 +577,7 @@ keys_search_text_query(keySlots *slots, pmSearchTextRequest *request, void *arg)
     size_t		length;
     char		buffer[64];
     sds			cmd, key, query, base_query;
-    unsigned int	types = 0, infields = 0, returns = 0, highlights = 0;
+    unsigned int	types = 0, infields = 0, returns = 0;
 
     seriesBatonCheckMagic(baton, MAGIC_SEARCH, "keys_search_text_query");
     seriesBatonCheckCount(baton, "keys_search_text_query");
@@ -592,9 +591,11 @@ keys_search_text_query(keySlots *slots, pmSearchTextRequest *request, void *arg)
     types += request->type_indom;
     types += request->type_inst;
 
-    highlights += request->highlight_name;
-    highlights += request->highlight_oneline;
-    highlights += request->highlight_helptext;
+    /*
+     * ValkeySearch 1.2 does not support WITHSCORES, SCORER BM25,
+     * INFIELDS, or HIGHLIGHT in FT.SEARCH.  Restore these if
+     * ValkeySearch adds support in a future release.
+     */
 
     infields += request->infields_name;
     infields += request->infields_oneline;
@@ -619,28 +620,27 @@ keys_search_text_query(keySlots *slots, pmSearchTextRequest *request, void *arg)
 	request->return_helptext = 1;
 	request->return_type = 1;
     }
+    if (!request->return_type) {
+	request->return_type = 1;
+	returns++;
+    }
 
     /*
-     * FT.SEARCH pcp:text "query [@TYPE={ {?type separated by pipe} }]" WITHSCORES WITHPAYLOADS
-     *		[INFIELDS {?field item count} {?field separated by space}]
-     *		[RETURN {?return item count} {?return separated by space}]
-     *		[HIGHLIGHT FIELDS {num} {field} ... ]
-     *		SCORER BM25
-     *		LIMIT {?pagination offset} {?return result count}
+     * FT.SEARCH pcp:text "query" INORDER
+     *		[RETURN {count} {fields...}]
+     *		LIMIT {offset} {count}
      */
     key = sdsnewlen(FT_TEXT_KEY, FT_TEXT_KEY_LEN);
-    length = 5;
-    if (infields)
-	length += 2 + infields;
+    length = 3 + 1;	/* FT.SEARCH key query INORDER */
     if (returns)
 	length += 2 + returns;
-    if (highlights)
-	length += 3 + highlights;
-    length += 2 + 3;
+    length += 3;	/* LIMIT offset count */
 
     cmd = resp_command(length);
     cmd = resp_param_str(cmd, FT_SEARCH, FT_SEARCH_LEN);
     cmd = resp_param_sds(cmd, key);
+
+    base_query = keys_search_text_prep(request->query, 0, NULL, NULL);
 
     query = sdscatlen(sdsempty(), "\'", 1);
     if (types) {
@@ -663,26 +663,30 @@ keys_search_text_query(keySlots *slots, pmSearchTextRequest *request, void *arg)
 	}
 	query = sdscatlen(query, "} ", 2);
     }
-    base_query = keys_search_text_prep(request->query, 0, NULL, NULL);
-    query = sdscatfmt(query, "(%S)=>{$inorder:true}\'", base_query);
+
+    if (infields < 3) {
+	const char *sep = "(";
+	if (request->infields_name) {
+	    query = sdscatfmt(query, "%s@NAME:(%S)", sep, base_query);
+	    sep = " | ";
+	}
+	if (request->infields_oneline) {
+	    query = sdscatfmt(query, "%s@ONELINE:(%S)", sep, base_query);
+	    sep = " | ";
+	}
+	if (request->infields_helptext) {
+	    query = sdscatfmt(query, "%s@HELPTEXT:(%S)", sep, base_query);
+	}
+	query = sdscat(query, ")");
+    } else {
+	query = sdscatfmt(query, "(%S)", base_query);
+    }
+    query = sdscatlen(query, "\'", 1);
     sdsfree(base_query);
     cmd = resp_param_sds(cmd, query);
     sdsfree(query);
 
-    cmd = resp_param_str(cmd, FT_WITHSCORES, FT_WITHSCORES_LEN);
-    cmd = resp_param_str(cmd, FT_WITHPAYLOADS, FT_WITHPAYLOADS_LEN);
-
-    if (infields) {
-	cmd = resp_param_str(cmd, FT_INFIELDS, FT_INFIELDS_LEN);
-	length = pmsprintf(buffer, sizeof(buffer), "%u", infields);
-	cmd = resp_param_str(cmd, buffer, length);
-	if (request->infields_name)
-	    cmd = resp_param_str(cmd, FT_NAME, FT_NAME_LEN);
-	if (request->infields_oneline)
-	    cmd = resp_param_str(cmd, FT_ONELINE, FT_ONELINE_LEN);
-	if (request->infields_helptext)
-	    cmd = resp_param_str(cmd, FT_HELPTEXT, FT_HELPTEXT_LEN);
-    }
+    cmd = resp_param_str(cmd, FT_INORDER, FT_INORDER_LEN);
 
     if (returns) {
 	cmd = resp_param_str(cmd, FT_RETURN, FT_RETURN_LEN);
@@ -699,22 +703,6 @@ keys_search_text_query(keySlots *slots, pmSearchTextRequest *request, void *arg)
 	if (request->return_type)
 	    cmd = resp_param_str(cmd, FT_TYPE, FT_TYPE_LEN);
     }
-
-    if (highlights) {
-	cmd = resp_param_str(cmd, FT_HIGHLIGHT, FT_HIGHLIGHT_LEN);
-	cmd = resp_param_str(cmd, FT_FIELDS, FT_FIELDS_LEN);
-	length = pmsprintf(buffer, sizeof(buffer), "%u", highlights);
-	cmd = resp_param_str(cmd, buffer, length);
-	if (request->highlight_name)
-	    cmd = resp_param_str(cmd, FT_NAME, FT_NAME_LEN);
-	if (request->highlight_oneline)
-	    cmd = resp_param_str(cmd, FT_ONELINE, FT_ONELINE_LEN);
-	if (request->highlight_helptext)
-	    cmd = resp_param_str(cmd, FT_HELPTEXT, FT_HELPTEXT_LEN);
-    }
-
-    cmd = resp_param_str(cmd, FT_SCORER, FT_SCORER_LEN);
-    cmd = resp_param_str(cmd, FT_SCORER_BM25, FT_SCORER_BM25_LEN);
 
     cmd = resp_param_str(cmd, FT_LIMIT, FT_LIMIT_LEN);
     length = pmsprintf(buffer, sizeof(buffer), "%u", request->offset);
@@ -771,6 +759,11 @@ keys_search_text_suggest(keySlots *slots, pmSearchTextRequest *request, void *ar
     prefix_length = sdslen(prefix_query);
     fuzzy_length = sdslen(fuzzy_query);
 
+    /*
+     * ValkeySearch 1.2 does not support =>{$weight:...} query
+     * modifiers.  Fuzzy matches are given equal weight to prefix
+     * matches.  Restore weighting if ValkeySearch adds support.
+     */
     query = sdsnewlen("\'", 1);
     prefix = "";
     if (prefix_length || fuzzy_length) {
@@ -781,7 +774,7 @@ keys_search_text_suggest(keySlots *slots, pmSearchTextRequest *request, void *ar
 	prefix = "|";
     }
     if (fuzzy_length) {
-	query = sdscatfmt(query, "%s@NAME:(%S)=>{$weight:0.25;}", prefix, fuzzy_query);
+	query = sdscatfmt(query, "%s@NAME:(%S)", prefix, fuzzy_query);
 	prefix = "|";
     }
     if (prefix_length || fuzzy_length) {
@@ -801,28 +794,23 @@ keys_search_text_suggest(keySlots *slots, pmSearchTextRequest *request, void *ar
 
     /*
      * FT.SEARCH pcp:text
-     * 		"(@NAME:({query}*)|@NAME:(%{query}%)=>{$weight:0.25;}) @TYPE={metric|instance}"
-     * 		WITHSCORES WITHPAYLOADS
-     * 		RETURN 1 NAME
-     * 		SCORER BM25
+     * 		"(@NAME:({query}*)|@NAME:(%{query}%)) @TYPE:{metric|instance}"
+     * 		RETURN 2 NAME TYPE
      * 		LIMIT 0 {?return result count}
      */
     key = sdsnewlen(FT_TEXT_KEY, FT_TEXT_KEY_LEN);
 
-    length = 13; // Resp array size
+    length = 9;
     cmd = resp_command(length);
     cmd = resp_param_str(cmd, FT_SEARCH, FT_SEARCH_LEN);
     cmd = resp_param_sds(cmd, key);
     cmd = resp_param_sds(cmd, query);
     sdsfree(query);
 
-    cmd = resp_param_str(cmd, FT_WITHSCORES, FT_WITHSCORES_LEN);
-    cmd = resp_param_str(cmd, FT_WITHPAYLOADS, FT_WITHPAYLOADS_LEN);
     cmd = resp_param_str(cmd, FT_RETURN, FT_RETURN_LEN);
-    cmd = resp_param_str(cmd, "1", 1);
+    cmd = resp_param_str(cmd, "2", 1);
     cmd = resp_param_str(cmd, FT_NAME, FT_NAME_LEN);
-    cmd = resp_param_str(cmd, FT_SCORER, FT_SCORER_LEN);
-    cmd = resp_param_str(cmd, FT_SCORER_BM25, FT_SCORER_BM25_LEN);
+    cmd = resp_param_str(cmd, FT_TYPE, FT_TYPE_LEN);
     cmd = resp_param_str(cmd, FT_LIMIT, FT_LIMIT_LEN);
     cmd = resp_param_str(cmd, "0", 1);
     if (request->count == 0) {
@@ -877,24 +865,20 @@ keys_search_text_indom(keySlots *slots, pmSearchTextRequest *request, void *arg)
 
     /*
      * FT.SEARCH pcp:text
-     * 		"@INDOM:{{query}}" WITHSCORES WITHPAYLOADS
-     * 		SORTBY 2 TYPE ASC
+     * 		"@INDOM:{{query}}"
+     * 		SORTBY TYPE ASC
      *.		LIMIT {?pagination offset} {?return result count}
      */
     key = sdsnewlen(FT_TEXT_KEY, FT_TEXT_KEY_LEN);
 
-    length = 12; // Resp array size
+    length = 9;
     cmd = resp_command(length);
     cmd = resp_param_str(cmd, FT_SEARCH, FT_SEARCH_LEN);
     cmd = resp_param_sds(cmd, key);
     cmd = resp_param_sds(cmd, query);
     sdsfree(query);
 
-    cmd = resp_param_str(cmd, FT_WITHSCORES, FT_WITHSCORES_LEN);
-    cmd = resp_param_str(cmd, FT_WITHPAYLOADS, FT_WITHPAYLOADS_LEN);
-
     cmd = resp_param_str(cmd, FT_SORTBY, FT_SORTBY_LEN);
-    cmd = resp_param_str(cmd, "2", 1);
     cmd = resp_param_str(cmd, FT_TYPE, FT_TYPE_LEN);
     cmd = resp_param_str(cmd, FT_ASC, FT_ASC_LEN);
 
@@ -968,18 +952,28 @@ keys_load_search_schema(void *arg)
     seriesBatonReference(baton, "keys_load_search_schema");
 
     /*
-     * FT.CREATE pcp:text SCHEMA
-     *		type TAG SORTABLE
-     *		name TEXT WEIGHT 9 SORTABLE
-     *		indom TAG
-     *		oneline TEXT WEIGHT 4
-     *		helptext TEXT WEIGHT 2
+     * FT.CREATE pcp:text ON HASH PREFIX 1 pcp:text: SCHEMA
+     *		TYPE TAG SORTABLE
+     *		NAME TEXT SORTABLE
+     *		INDOM TAG
+     *		ONELINE TEXT
+     *		HELPTEXT TEXT
+     *
+     * ValkeySearch 1.2: WEIGHT only supports 1.0, so omitted.
+     * With RediSearch, NAME had WEIGHT 9, ONELINE 4, HELPTEXT 2
+     * to rank name matches higher.  Restore if ValkeySearch adds
+     * support for custom weights.
      */
     key = sdsnewlen(FT_TEXT_KEY, FT_TEXT_KEY_LEN);
-    cmd = resp_command(3 + 3 + 5 + 2 + 4 + 4);
+    cmd = resp_command(3 + 4 + 3 + 3 + 2 + 2 + 2);
 
     cmd = resp_param_str(cmd, FT_CREATE, FT_CREATE_LEN);
     cmd = resp_param_str(cmd, FT_TEXT_KEY, FT_TEXT_KEY_LEN);
+    cmd = resp_param_str(cmd, FT_ON, FT_ON_LEN);
+    cmd = resp_param_str(cmd, FT_HASH, FT_HASH_LEN);
+    cmd = resp_param_str(cmd, FT_PREFIX, FT_PREFIX_LEN);
+    cmd = resp_param_str(cmd, "1", 1);
+    cmd = resp_param_str(cmd, FT_TEXT_KEY_PFX, FT_TEXT_KEY_PFX_LEN);
     cmd = resp_param_str(cmd, FT_SCHEMA, FT_SCHEMA_LEN);
 
     cmd = resp_param_str(cmd, FT_TYPE, FT_TYPE_LEN);
@@ -988,8 +982,6 @@ keys_load_search_schema(void *arg)
 
     cmd = resp_param_str(cmd, FT_NAME, FT_NAME_LEN);
     cmd = resp_param_str(cmd, FT_TEXT, FT_TEXT_LEN);
-    cmd = resp_param_str(cmd, FT_WEIGHT, FT_WEIGHT_LEN);
-    cmd = resp_param_str(cmd, "9", sizeof("9")-1);
     cmd = resp_param_str(cmd, FT_SORTABLE, FT_SORTABLE_LEN);
 
     cmd = resp_param_str(cmd, FT_INDOM, FT_INDOM_LEN);
@@ -997,13 +989,9 @@ keys_load_search_schema(void *arg)
 
     cmd = resp_param_str(cmd, FT_ONELINE, FT_ONELINE_LEN);
     cmd = resp_param_str(cmd, FT_TEXT, FT_TEXT_LEN);
-    cmd = resp_param_str(cmd, FT_WEIGHT, FT_WEIGHT_LEN);
-    cmd = resp_param_str(cmd, "4", sizeof("4")-1);
 
     cmd = resp_param_str(cmd, FT_HELPTEXT, FT_HELPTEXT_LEN);
     cmd = resp_param_str(cmd, FT_TEXT, FT_TEXT_LEN);
-    cmd = resp_param_str(cmd, FT_WEIGHT, FT_WEIGHT_LEN);
-    cmd = resp_param_str(cmd, "2", sizeof("2")-1);
 
     sdsfree(key);
     keySlotsRequestFirstNode(baton->slots, cmd, keys_search_schema_callback, arg);
