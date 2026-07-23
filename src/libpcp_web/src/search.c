@@ -871,21 +871,27 @@ pmSearchSetup(pmSearchModule *module, void *arg)
 	    smd->resultcount = atoi(option);
     }
 
-    /* try configured index path, then default location */
+    /* try configured path, then runtime index, then base index */
     option = smd->config ?
 	     pmIniFileLookup(smd->config, "pmsearch", "index.path") : NULL;
     if (option) {
 	pmsprintf(path, sizeof(path), "%s", option);
+	sts = search_index_load(&smd->index, path);
     } else {
 	pmsprintf(path, sizeof(path), "%s/lib/pcp.search",
-		  pmGetConfig("PCP_SHARE_DIR"));
+		  pmGetConfig("PCP_VAR_DIR"));
+	sts = search_index_load(&smd->index, path);
+	if (sts < 0) {
+	    pmsprintf(path, sizeof(path), "%s/lib/pcp.search",
+		      pmGetConfig("PCP_SHARE_DIR"));
+	    sts = search_index_load(&smd->index, path);
+	}
     }
 
-    sts = search_index_load(&smd->index, path);
     if (sts < 0) {
 	if (pmDebugOptions.search)
-	    fprintf(stderr, "pmSearchSetup: failed to load index %s: %s\n",
-		    path, pmErrStr(sts));
+	    fprintf(stderr, "pmSearchSetup: failed to load index: %s\n",
+		    pmErrStr(sts));
 	smd->loaded = 0;
     } else {
 	smd->loaded = 1;
