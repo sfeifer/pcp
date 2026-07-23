@@ -18,7 +18,7 @@ include	$(TOPDIR)/src/include/builddefs
 include	$(TOPDIR)/src/libpcp/src/GNUlibrarydefs
 
 TARGETS = newhelp$(EXECSUFFIX) chkhelp$(EXECSUFFIX)
-CFILES = newhelp.c chkhelp.c
+CFILES = newhelp.c chkhelp.c searchindex.c
 
 LLDFLAGS = $(WARN_OFF)
 LLDLIBS = $(PCP_PMDALIB)
@@ -40,12 +40,12 @@ install:	default
 
 include $(BUILDRULES)
 
-newhelp$(EXECSUFFIX):	newhelp.c
-	$(CCF) -o $@ $(LDFLAGS) newhelp.c $(LDLIBS)
+newhelp$(EXECSUFFIX):	newhelp.c searchindex.c
+	$(CCF) -o $@ $(LDFLAGS) newhelp.c searchindex.c $(LDLIBS)
 	$(LINKER_MAKERULE)
 
-newhelp.static$(EXECSUFFIX):	newhelp.c $(STATIC_LIBPCP)
-	$(CCF) -DPCP_STATIC -o $@ $(LDFLAGS) newhelp.c $(STATIC_LIBPCP) $(STATIC_LDLIBS)
+newhelp.static$(EXECSUFFIX):	newhelp.c searchindex.c $(STATIC_LIBPCP)
+	$(CCF) -DPCP_STATIC -o $@ $(LDFLAGS) newhelp.c searchindex.c $(STATIC_LIBPCP) $(STATIC_LDLIBS)
 
 chkhelp$(EXECSUFFIX):	chkhelp.o
 	$(CCF) -o $@ $(LDFLAGS) chkhelp.o $(LDLIBS)

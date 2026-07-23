@@ -36,7 +36,7 @@ endif
 HFILES = jsmn.h http_client.h http_parser.h zmalloc.h \
 	 query.h schema.h load.h sha1.h util.h slots.h \
 	 keys.h maps.h batons.h encoding.h \
-	 search.h discover.h private.h
+	 search.h searchindex.h discover.h private.h
 ifneq "$(HAVE_LIBINIH)" "true"
 	 HFILES += $(INIH_HFILES)
 endif

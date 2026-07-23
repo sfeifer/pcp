@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017-2020 Red Hat.
+# Copyright (c) 2017-2020,2026 Red Hat.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -18,24 +18,16 @@ include $(TOPDIR)/src/include/builddefs
 CFILES = pmsearch.c
 CMDTARGET = pmsearch$(EXECSUFFIX)
 LLDLIBS	= $(PCP_WEBLIB)
-LCFLAGS = $(LIBUVCFLAGS)
 ifeq "$(TARGET_OS)" "mingw"
 LLDLIBS += -lws2_32
 endif
 
-default:	build-me
-
-ifeq "$(HAVE_LIBUV)" "true"
-build-me:	$(CMDTARGET)
+default:	$(CMDTARGET)
 
 install:	default
 	$(INSTALL) -m 755 $(CMDTARGET) $(PCP_BIN_DIR)/$(CMDTARGET)
 	$(INSTALL) -m 755 -d $(PCP_SYSCONF_DIR)/pmsearch
 	$(INSTALL) -S $(PCP_SYSCONF_DIR)/pmproxy/pmproxy.conf $(PCP_SYSCONF_DIR)/pmsearch/pmsearch.conf
-else
-build-me:
-install:
-endif
 
 include $(BUILDRULES)
 

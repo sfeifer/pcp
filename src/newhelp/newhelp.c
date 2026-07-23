@@ -26,6 +26,7 @@
 #include <fcntl.h>
 #include "pmapi.h"
 #include "libpcp.h"
+#include "searchindex.h"
 
 #define DEFAULT_HELP_VERSION 2
 
@@ -38,6 +39,7 @@ static int	ln;
 static char	*filename;
 static int	status;
 static int	version = DEFAULT_HELP_VERSION;
+static int	search_mode;	/* -S: build search index */
 static FILE	*f;
 
 typedef struct {
@@ -217,6 +219,75 @@ newentry(char *buf)
     }
 }
 
+/*
+ * Search index mode (-S): collect entries for the inverted index.
+ * Unlike newentry() which writes .pag files, this just parses the
+ * name/oneline/helptext and passes them to the search index builder.
+ */
+static void
+newentry_search(char *buf)
+{
+    char	*p;
+    char	*name;
+    char	*oneline;
+    char	*helptext;
+    int		domain, serial;
+    uint8_t	type;
+    char	indom_buf[64];
+
+    /* skip leading white space */
+    for (p = buf; isspace((int)*p); p++)
+	;
+    name = p;
+
+    /* skip over metric name or indom spec */
+    for ( ; *p != '\n' && !isspace((int)*p); p++)
+	;
+    *p = '\0';
+    p++;
+
+    /* determine type: NNN.NNN = indom, otherwise metric name */
+    if (sscanf(name, "%d.%d", &domain, &serial) == 2 &&
+	strchr(name, '.') == strrchr(name, '.')) {
+	type = SEARCH_DOC_INDOM;
+	pmsprintf(indom_buf, sizeof(indom_buf), "%s", name);
+    } else {
+	type = SEARCH_DOC_METRIC;
+	indom_buf[0] = '\0';
+    }
+
+    /* skip whitespace to start of oneline */
+    while (*p != '\n' && isspace((int)*p))
+	p++;
+    oneline = p;
+
+    /* find end of oneline */
+    while (*p != '\n' && *p != '\0')
+	p++;
+    if (*p == '\n') {
+	*p = '\0';
+	p++;
+    }
+
+    /* remainder is helptext - trim trailing newlines */
+    helptext = p;
+    if (*helptext) {
+	int len = (int)strlen(helptext) - 1;
+	while (len >= 0 && helptext[len] == '\n')
+	    len--;
+	helptext[len + 1] = '\0';
+    }
+
+    if (verbose)
+	fprintf(stderr, "%s\n", name);
+
+    search_index_add_doc(name,
+			 (*oneline != '\0') ? oneline : NULL,
+			 (*helptext != '\0') ? helptext : NULL,
+			 (indom_buf[0] != '\0') ? indom_buf : NULL,
+			 type);
+}
+
 static int
 idcomp(const void *a, const void *b)
 {
@@ -248,13 +319,14 @@ static pmLongOptions longopts[] = {
     PMOPT_HELP,
     PMAPI_OPTIONS_HEADER("Output options"),
     { "output", 1, 'o', "FILE", "base name for output files" },
+    { "search", 0, 'S', 0, "build search index (output file is a search index)" },
     { "verbose", 0, 'V', 0, "verbose/diagnostic output" },
     { "version", 1, 'v', "N", "deprecated (only version 2 format supported)" },
     PMAPI_OPTIONS_END
 };
 
 static pmOptions opts = {
-    .short_options = "D:n:o:Vv:?",
+    .short_options = "D:n:o:SVv:?",
     .long_options = longopts,
     .short_usage = "[options] [file ...]",
 };
@@ -293,6 +365,10 @@ main(int argc, char **argv)
 
 	case 'o':	/* alternative output file name */
 	    fname = opts.optarg;
+	    break;
+
+	case 'S':	/* build search index */
+	    search_mode = 1;
 	    break;
 
 	case 'V':	/* more chit-chat */
@@ -350,7 +426,7 @@ main(int argc, char **argv)
 	    inf = stdin;
 	}
 
-	if (version == 2 && f == NULL) {
+	if (!search_mode && version == 2 && f == NULL) {
 	    pmsprintf(pathname, sizeof(pathname), "%s.pag", fname);
 	    if ((f = fopen(pathname, "w")) == NULL) {
 		fprintf(stderr, "%s: fopen(\"%s\", ...) failed: %s\n",
@@ -380,7 +456,10 @@ main(int argc, char **argv)
 			p--;
 		    *++p = '\n';
 		    *++p = '\0';
-		    newentry(buf);
+		    if (search_mode)
+			newentry_search(buf);
+		    else
+			newentry(buf);
 		}
 		if (skip == -1)
 		    break;
@@ -432,7 +511,16 @@ main(int argc, char **argv)
 	opts.optind++;
     } while (opts.optind < argc);
 
-    if (f != NULL) {
+    if (search_mode) {
+	if (fname == NULL) {
+	    fprintf(stderr, "%s: -S mode requires -o to name the output file\n",
+		    pmGetProgname());
+	    exit(2);
+	}
+	if (search_index_write(fname) < 0)
+	    status = 2;
+	search_index_build_free();
+    } else if (f != NULL) {
 	fclose(f);
 
 	/* do the directory index ... */

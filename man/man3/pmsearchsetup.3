@@ -1,6 +1,6 @@
 '\"macro stdmacro
 .\"
-.\" Copyright (c) 2020 Red Hat.
+.\" Copyright (c) 2020,2026 Red Hat.
 .\"
 .\" This program is free software; you can redistribute it and/or modify it
 .\" under the terms of the GNU General Public License as published by the
@@ -52,11 +52,16 @@ cc ... \-lpcp_web
 .SH DESCRIPTION
 The
 .B pmSearchSetup
-and related API functions prepare an application for accessing the fast and scalable metric, instance and instance domain, full-text capable, searching functionality of the Performance Co-Pilot (PCP).
+and related API functions prepare an application for accessing the
+full-text capable search functionality of the Performance Co-Pilot (PCP).
 .PP
-This functionality is provided trough asynchronous APIs, which function in event-driven fashion. The interface described here prepare a given search
-.IR module
-which associates callback routines with certain asynchronous events that occur as part of servicing search requests.
+.B pmSearchSetup
+loads a pre-built inverted index from disk (by default
+.IR $PCP_SHARE_DIR/lib/pcp.search )
+and prepares it for query operations.
+The index is built at package build time by
+.BR newhelp (1)
+from PCP help text source files.
 .PP
 As a general pattern, all interfaces in these APIs that need to invoke
 .I callbacks
@@ -65,15 +70,16 @@ provided by the calling program will take an opaque (void * pointer)
 parameter.
 This pointer will be passed through unchanged and is typically used to access a data structure maintaining state within the calling program.
 .PP
-Where asynchronous setup is required by
-.B pmSearchSetup
-its completion will be indicated through use of the
+On completion of setup,
+the
 .I on_setup
-callback, which is part of the passed in
+callback (part of the
 .I pmSearchModule
-structure. This structure also provides for custom diagnostics handling, through the
+structure) is invoked.
+The structure also provides for custom diagnostics handling through the
 .I on_info
-callback. These are self-explanatory, see
+callback.
+See
 .I <pcp/pmwebapi.h>
 for exact calling conventions.
 .PP
@@ -101,17 +107,19 @@ On completion of all asynchronous interfaces that return success
 It provides a status code indicating overall success (zero) or
 failure (negative PMAPI code) of the operation.
 .PP
-The helper functions
-.B pmSearchSetSlots
-(key-value server),
-.B pmSearchSetEventLoop
-(libuv),
+The helper function
 .B pmSearchSetConfiguration
 (configuration file)
+provides a mechanism for passing in settings such as
+the search index file path and default result count.
+.PP
+The functions
+.BR pmSearchSetSlots ,
+.BR pmSearchSetEventLoop
 and
 .B pmSearchSetMetricRegistry
-(MMV instrumentation)
-interfaces provide a mechanism for passing in state for each of the associated subsystems.
+are retained for API compatibility but are no-ops in the
+current implementation.
 .PP
 Finally, a call to
 .B pmSearchClose
@@ -144,4 +152,5 @@ and
 .\" control lines for scripts/man-spell
 .\" +ok+ on_text_result on_metrics on_setup on_done on_info {from callbacks}
 .\" +ok+ pmwebapi {from include <pcp/pmwebapi.h>}
-.\" +ok+ libuv dict {from struct dict}
+.\" +ok+ dict {from struct dict}
+.\" +ok+ ops {from no-ops}
