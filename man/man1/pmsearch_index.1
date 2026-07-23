@@ -22,33 +22,42 @@
 [\fB\-o\fR \fIindex\fR]
 .SH DESCRIPTION
 .B pmsearch_index
-rebuilds the full-text search index used by
+rebuilds the runtime full-text search index used by
 .BR pmsearch (1)
 and the
 .BR pmproxy (1)
 .I /search
 REST API endpoint.
 .PP
+Its primary purpose is to capture
+.B "instance names"
+(disk devices, network interfaces, filesystems, etc.)
+that are only known on a running system.
 It queries the running
 .BR pmcd (1)
-for all metric names, one-line and full help text,
+for all metric names, help text, and instance domain members,
 then builds a binary inverted index using
 .BR newhelp (1).
 The resulting index file is written to
 .I $PCP_VAR_DIR/lib/pcp.search
 by default.
 .PP
+The search engine uses
+.B both
+the runtime index and the base index shipped with the PCP package.
+The runtime index takes precedence for any entries it contains;
+the base index fills in metrics from PMDAs that are not installed
+on the current system.
+.PP
 This command is typically invoked nightly via a systemd timer
 or cron job.
-It captures metrics from third-party PMDAs that may have been
-installed after the PCP package was built.
 .PP
 If
 .B pmcd
 is not running or no metrics are found, the command exits
 without modifying any existing index file.
-The base index shipped with the PCP package (at
-.IR $PCP_SHARE_DIR/lib/pcp.search )
+The base index at
+.I $PCP_SHARE_DIR/lib/pcp.search
 remains available as a fallback.
 .SH OPTIONS
 .TP 5

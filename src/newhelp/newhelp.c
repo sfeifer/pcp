@@ -238,6 +238,62 @@ newentry_search(char *buf)
     /* skip leading white space */
     for (p = buf; isspace((int)*p); p++)
 	;
+
+    /*
+     * Instance entry: @I indom_id<TAB>instance name
+     * Followed by optional oneline and helptext on subsequent lines.
+     * Tab separates indom_id from instance name (names may contain spaces).
+     */
+    if (*p == 'I' && isspace((int)*(p + 1))) {
+	char	*indom_str, *inst_name;
+
+	p += 2;
+	while (*p == ' ')
+	    p++;
+	indom_str = p;
+	while (*p && *p != '\t' && *p != '\n')
+	    p++;
+	if (*p == '\t') {
+	    *p++ = '\0';
+	} else {
+	    /* no tab — malformed, skip */
+	    return;
+	}
+	inst_name = p;
+	while (*p && *p != '\n')
+	    p++;
+	if (*p == '\n') {
+	    *p = '\0';
+	    p++;
+	}
+
+	/* remainder is oneline[\nhelptext] */
+	oneline = p;
+	while (*p != '\n' && *p != '\0')
+	    p++;
+	if (*p == '\n') {
+	    *p = '\0';
+	    p++;
+	}
+
+	helptext = p;
+	if (*helptext) {
+	    int len = (int)strlen(helptext) - 1;
+	    while (len >= 0 && helptext[len] == '\n')
+		len--;
+	    helptext[len + 1] = '\0';
+	}
+
+	if (verbose)
+	    fprintf(stderr, "instance %s [%s]\n", inst_name, indom_str);
+
+	search_index_add_doc(inst_name,
+			     (*oneline != '\0') ? oneline : NULL,
+			     (*helptext != '\0') ? helptext : NULL,
+			     indom_str, SEARCH_DOC_INST);
+	return;
+    }
+
     name = p;
 
     /* skip over metric name or indom spec */

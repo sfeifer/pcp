@@ -31,6 +31,219 @@ typedef struct searchModuleData {
 static int		search_enabled;
 static unsigned int	default_resultcount = 10;
 
+/* --- index merge --- */
+
+/*
+ * Merge a secondary index into a primary index.
+ * Documents in the secondary whose name+type already exist in the
+ * primary are skipped (primary wins).  New documents and their
+ * postings are appended; term dictionaries are merged.
+ * On success the secondary index is freed; on failure both are untouched.
+ */
+static int
+search_index_merge(search_index_t *primary, search_index_t *secondary)
+{
+    uint32_t	*doc_map;	/* secondary doc_id → merged doc_id */
+    int		*doc_keep;	/* 1 if secondary doc should be kept */
+    uint32_t	new_docs = 0;
+    uint32_t	i, j, pi, si;
+    uint32_t	merged_ndocs, merged_nterms, merged_npostings;
+    uint32_t	merged_strings_len;
+    search_doc_t	*merged_docs;
+    search_term_t	*merged_terms;
+    search_posting_t	*merged_postings;
+    char		*merged_strings;
+    uint32_t	post_off;
+    uint32_t	str_base;
+
+    if (secondary->ndocs == 0) {
+	search_index_free(secondary);
+	return 0;
+    }
+
+    doc_map = calloc(secondary->ndocs, sizeof(uint32_t));
+    doc_keep = calloc(secondary->ndocs, sizeof(int));
+    if (!doc_map || !doc_keep) {
+	free(doc_map);
+	free(doc_keep);
+	return -ENOMEM;
+    }
+
+    /* determine which secondary docs to keep (not in primary) */
+    for (i = 0; i < secondary->ndocs; i++) {
+	const char *sname = secondary->strings + secondary->docs[i].name_off;
+	uint8_t stype = secondary->docs[i].type;
+	int found = 0;
+
+	for (j = 0; j < primary->ndocs; j++) {
+	    if (primary->docs[j].type == stype &&
+		strcmp(primary->strings + primary->docs[j].name_off, sname) == 0) {
+		found = 1;
+		break;
+	    }
+	}
+	if (!found) {
+	    doc_keep[i] = 1;
+	    doc_map[i] = primary->ndocs + new_docs;
+	    new_docs++;
+	}
+    }
+
+    if (new_docs == 0) {
+	free(doc_map);
+	free(doc_keep);
+	search_index_free(secondary);
+	return 0;
+    }
+
+    /* merged string pool: primary strings + secondary strings */
+    str_base = primary->strings_len;
+    merged_strings_len = primary->strings_len + secondary->strings_len;
+    merged_strings = malloc(merged_strings_len);
+    if (!merged_strings) {
+	free(doc_map);
+	free(doc_keep);
+	return -ENOMEM;
+    }
+    memcpy(merged_strings, primary->strings, primary->strings_len);
+    memcpy(merged_strings + str_base, secondary->strings, secondary->strings_len);
+
+    /* merged document table */
+    merged_ndocs = primary->ndocs + new_docs;
+    merged_docs = calloc(merged_ndocs, sizeof(search_doc_t));
+    if (!merged_docs) {
+	free(doc_map);
+	free(doc_keep);
+	free(merged_strings);
+	return -ENOMEM;
+    }
+    memcpy(merged_docs, primary->docs, primary->ndocs * sizeof(search_doc_t));
+    j = primary->ndocs;
+    for (i = 0; i < secondary->ndocs; i++) {
+	if (!doc_keep[i])
+	    continue;
+	merged_docs[j] = secondary->docs[i];
+	merged_docs[j].name_off += str_base;
+	if (merged_docs[j].oneline_off)
+	    merged_docs[j].oneline_off += str_base;
+	if (merged_docs[j].helptext_off)
+	    merged_docs[j].helptext_off += str_base;
+	if (merged_docs[j].indom_off)
+	    merged_docs[j].indom_off += str_base;
+	j++;
+    }
+
+    /* count new postings from secondary (only for kept docs) */
+    merged_npostings = primary->npostings;
+    for (i = 0; i < secondary->nterms; i++) {
+	search_term_t *st = &secondary->terms[i];
+	for (j = 0; j < st->npostings; j++) {
+	    if (doc_keep[secondary->postings[st->postings_off + j].doc_id])
+		merged_npostings++;
+	}
+    }
+
+    /* merge term dictionaries — both are sorted */
+    merged_nterms = 0;
+    pi = 0; si = 0;
+    while (pi < primary->nterms || si < secondary->nterms) {
+	if (pi < primary->nterms && si < secondary->nterms) {
+	    int cmp = strcmp(primary->strings + primary->terms[pi].term_off,
+			    secondary->strings + secondary->terms[si].term_off);
+	    if (cmp <= 0) { pi++; if (cmp == 0) si++; }
+	    else si++;
+	} else if (pi < primary->nterms) {
+	    pi++;
+	} else {
+	    si++;
+	}
+	merged_nterms++;
+    }
+
+    merged_terms = calloc(merged_nterms, sizeof(search_term_t));
+    merged_postings = calloc(merged_npostings, sizeof(search_posting_t));
+    if (!merged_terms || !merged_postings) {
+	free(doc_map);
+	free(doc_keep);
+	free(merged_strings);
+	free(merged_docs);
+	free(merged_terms);
+	free(merged_postings);
+	return -ENOMEM;
+    }
+
+    /* second pass: populate merged terms and postings */
+    pi = si = 0;
+    post_off = 0;
+    for (i = 0; i < merged_nterms; i++) {
+	int have_primary = 0, have_secondary = 0;
+	int cmp = 0;
+
+	if (pi < primary->nterms && si < secondary->nterms) {
+	    cmp = strcmp(primary->strings + primary->terms[pi].term_off,
+			secondary->strings + secondary->terms[si].term_off);
+	    have_primary = (cmp <= 0);
+	    have_secondary = (cmp >= 0);
+	} else if (pi < primary->nterms) {
+	    have_primary = 1;
+	} else {
+	    have_secondary = 1;
+	}
+
+	merged_terms[i].postings_off = post_off;
+	merged_terms[i].npostings = 0;
+	merged_terms[i].doc_freq = 0;
+
+	if (have_primary) {
+	    search_term_t *pt = &primary->terms[pi];
+	    merged_terms[i].term_off = pt->term_off;
+	    for (j = 0; j < pt->npostings; j++)
+		merged_postings[post_off++] = primary->postings[pt->postings_off + j];
+	    merged_terms[i].npostings += pt->npostings;
+	    merged_terms[i].doc_freq += pt->doc_freq;
+	    pi++;
+	}
+
+	if (have_secondary) {
+	    search_term_t *st = &secondary->terms[si];
+	    if (!have_primary)
+		merged_terms[i].term_off = st->term_off + str_base;
+	    for (j = 0; j < st->npostings; j++) {
+		search_posting_t *sp = &secondary->postings[st->postings_off + j];
+		if (!doc_keep[sp->doc_id])
+		    continue;
+		search_posting_t mp = *sp;
+		mp.doc_id = doc_map[sp->doc_id];
+		merged_postings[post_off++] = mp;
+		merged_terms[i].npostings++;
+		merged_terms[i].doc_freq++;
+	    }
+	    si++;
+	}
+    }
+    merged_npostings = post_off;
+
+    /* replace primary with merged */
+    free(primary->docs);
+    free(primary->terms);
+    free(primary->postings);
+    free(primary->strings);
+
+    primary->docs = merged_docs;
+    primary->terms = merged_terms;
+    primary->postings = merged_postings;
+    primary->strings = merged_strings;
+    primary->ndocs = merged_ndocs;
+    primary->nterms = merged_nterms;
+    primary->npostings = merged_npostings;
+    primary->strings_len = merged_strings_len;
+
+    free(doc_map);
+    free(doc_keep);
+    search_index_free(secondary);
+    return 0;
+}
+
 /* --- index file load/free --- */
 
 int
@@ -871,20 +1084,34 @@ pmSearchSetup(pmSearchModule *module, void *arg)
 	    smd->resultcount = atoi(option);
     }
 
-    /* try configured path, then runtime index, then base index */
+    /* load search indexes and merge if both exist */
     option = smd->config ?
 	     pmIniFileLookup(smd->config, "pmsearch", "index.path") : NULL;
     if (option) {
 	pmsprintf(path, sizeof(path), "%s", option);
 	sts = search_index_load(&smd->index, path);
     } else {
+	search_index_t	base;
+	char		basepath[MAXPATHLEN];
+	int		base_sts;
+
 	pmsprintf(path, sizeof(path), "%s/lib/pcp.search",
 		  pmGetConfig("PCP_VAR_DIR"));
 	sts = search_index_load(&smd->index, path);
-	if (sts < 0) {
-	    pmsprintf(path, sizeof(path), "%s/lib/pcp.search",
-		      pmGetConfig("PCP_SHARE_DIR"));
-	    sts = search_index_load(&smd->index, path);
+
+	pmsprintf(basepath, sizeof(basepath), "%s/lib/pcp.search",
+		  pmGetConfig("PCP_SHARE_DIR"));
+	base_sts = search_index_load(&base, basepath);
+
+	if (sts == 0 && base_sts == 0) {
+	    search_index_merge(&smd->index, &base);
+	    if (pmDebugOptions.search)
+		fprintf(stderr, "pmSearchSetup: merged base index "
+			"(%u total docs)\n", smd->index.ndocs);
+	} else if (sts < 0 && base_sts == 0) {
+	    smd->index = base;
+	    pmsprintf(path, sizeof(path), "%s", basepath);
+	    sts = 0;
 	}
     }
 
