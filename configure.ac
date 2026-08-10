@@ -2011,6 +2011,8 @@ else
 fi
 dnl Verify SQLite >= 3.9.0 and that the linked library provides FTS5
 if test $have_sqlite3 = true; then
+    save_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$sqlite3_CFLAGS $CPPFLAGS"
     save_LIBS="$LIBS"
     LIBS="$lib_for_sqlite3 $LIBS"
     AC_MSG_CHECKING([for SQLite3 >= 3.9.0 with FTS5 support])
@@ -2036,6 +2038,7 @@ return sts;
 	],
 	[AC_MSG_RESULT([assuming yes (cross-compiling)])])
     LIBS="$save_LIBS"
+    CPPFLAGS="$save_CPPFLAGS"
 fi
 if test $have_sqlite3 = false; then
     AC_MSG_ERROR([SQLite >= 3.9.0 with FTS5 support is required])

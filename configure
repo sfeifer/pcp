@@ -12424,6 +12424,8 @@ else
     lib_for_sqlite3="$sqlite3_LIBS"
 fi
 if test $have_sqlite3 = true; then
+    save_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$sqlite3_CFLAGS $CPPFLAGS"
     save_LIBS="$LIBS"
     LIBS="$lib_for_sqlite3 $LIBS"
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for SQLite3 >= 3.9.0 with FTS5 support" >&5
@@ -12476,6 +12478,7 @@ esac
 fi
 
     LIBS="$save_LIBS"
+    CPPFLAGS="$save_CPPFLAGS"
 fi
 if test $have_sqlite3 = false; then
     as_fn_error $? "SQLite >= 3.9.0 with FTS5 support is required" "$LINENO" 5

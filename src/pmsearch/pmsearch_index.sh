@@ -221,15 +221,20 @@ fi
 # Add/update all runtime data (metrics and instances) into the index.
 # Metrics already in the base index are updated; new metrics from
 # PMDAs without help files (e.g. Python PMDAs) are inserted.
-if $PCP_BINADM_DIR/newhelp -S -o "$NEW" $tmp/helptext && mv -f "$NEW" "$INDEX"
+if $PCP_BINADM_DIR/newhelp -S -o "$NEW" $tmp/helptext
 then
-    if $VERBOSE
+    if mv -f "$NEW" "$INDEX"
     then
-	nmetrics=`grep -c '^@ [^I]' $tmp/helptext`
-	ninst=`grep -c '^@ I ' $tmp/helptext`
-	echo "$prog: added $nmetrics metrics and $ninst instances to $INDEX"
+	if $VERBOSE
+	then
+	    nmetrics=`grep -c '^@ [^I]' $tmp/helptext`
+	    ninst=`grep -c '^@ I ' $tmp/helptext`
+	    echo "$prog: added $nmetrics metrics and $ninst instances to $INDEX"
+	fi
+	status=0
+    else
+	echo >&2 "$prog: cannot move $NEW to $INDEX"
     fi
-    status=0
 else
     echo >&2 "$prog: $PCP_BINADM_DIR/newhelp -S failed"
 fi
