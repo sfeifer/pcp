@@ -19,8 +19,8 @@ which pmsearch >/dev/null 2>&1 || \
     _notrun "pmsearch not installed"
 which newhelp >/dev/null 2>&1 || \
     _notrun "newhelp not installed"
-[ -x $PCP_BINADM_DIR/pmsearch_index ] || \
-    _notrun "pmsearch_index not installed"
+[ -x $PCP_BINADM_DIR/pmsearch_daily ] || \
+    _notrun "pmsearch_daily not installed"
 
 _cleanup()
 {
@@ -63,25 +63,25 @@ help=$PCP_PMDAS_DIR/sample/help
 
 # Mirror the real copy-and-extend strategy:
 #   1. Build base index from PMDA help files (like package install)
-#   2. Copy base to nightly location (like pmsearch_index.sh does)
+#   2. Copy base to nightly location (like pmsearch_daily.sh does)
 #   3. Append instance data from archive to the nightly copy
 
-# --- Base index (like $PCP_SHARE_DIR/lib/pcp.search) ---
+# --- Base index (like $PCP_SHARE_DIR/lib/pmsearch.index) ---
 mkdir -p $tmp.share/lib
-newhelp -S -o $tmp.share/lib/pcp.search $help 2>&1 \
+newhelp -S -o $tmp.share/lib/pmsearch.index $help 2>&1 \
     | sed -e "s,$tmp,TMP,g"
 echo "Base index built"
 
-# --- Nightly index (like $PCP_VAR_DIR/lib/pcp.search) ---
-# Use pmsearch_index to copy base and append instance data from archive
+# --- Nightly index (like $PCP_VAR_DIR/lib/pmsearch.index) ---
+# Use pmsearch_daily to copy base and append instance data from archive
 mkdir -p $tmp.var/lib
 export PCP_VAR_DIR=$tmp.var
 export PCP_SHARE_DIR=$tmp.share
-$PCP_BINADM_DIR/pmsearch_index -a $archive
+$PCP_BINADM_DIR/pmsearch_daily -a $archive
 echo "Nightly index built (base + instances)"
 echo
 
-# PCP_VAR_DIR and PCP_SHARE_DIR already exported above for pmsearch_index
+# PCP_VAR_DIR and PCP_SHARE_DIR already exported above for pmsearch_daily
 
 echo "=== Empty search ==="
 pmsearch -C xyznonexistent

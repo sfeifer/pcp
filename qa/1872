@@ -18,8 +18,8 @@ which pmsearch >/dev/null 2>&1 || \
     _notrun "pmsearch not installed"
 which newhelp >/dev/null 2>&1 || \
     _notrun "newhelp not installed"
-[ -x $PCP_BINADM_DIR/pmsearch_index ] || \
-    _notrun "pmsearch_index not installed"
+[ -x $PCP_BINADM_DIR/pmsearch_daily ] || \
+    _notrun "pmsearch_daily not installed"
 which pmproxy >/dev/null 2>&1 || \
     _notrun "pmproxy not installed"
 which curl >/dev/null 2>&1 || \
@@ -64,15 +64,15 @@ help=$PCP_PMDAS_DIR/sample/help
 [ -f "$help" ] || _notrun "sample PMDA help file not found"
 
 # Build a search index using the copy-and-extend strategy:
-# base index from help file, then pmsearch_index copies and appends instances.
+# base index from help file, then pmsearch_daily copies and appends instances.
 
 echo "=== Build search index ==="
 mkdir -p $tmp.share/lib $tmp.var/lib
-newhelp -S -o $tmp.share/lib/pcp.search $help 2>&1 \
+newhelp -S -o $tmp.share/lib/pmsearch.index $help 2>&1 \
     | sed -e "s,$tmp,TMP,g"
 export PCP_VAR_DIR=$tmp.var
 export PCP_SHARE_DIR=$tmp.share
-$PCP_BINADM_DIR/pmsearch_index -a $archive
+$PCP_BINADM_DIR/pmsearch_daily -a $archive
 echo "Index built"
 echo
 
@@ -83,7 +83,7 @@ pcp.enabled = true
 http.enabled = true
 [pmsearch]
 enabled = true
-index.path = $tmp.var/lib/pcp.search
+index.path = $tmp.var/lib/pmsearch.index
 result.count = 10
 EOF
 

@@ -13,16 +13,16 @@
 .\" for more details.
 .\"
 .\"
-.TH PMSEARCH_INDEX 1 "PCP" "Performance Co-Pilot"
+.TH PMSEARCH_DAILY 1 "PCP" "Performance Co-Pilot"
 .SH NAME
-\f3pmsearch_index\f1 \- rebuild the PCP full-text search index
+\f3pmsearch_daily\f1 \- rebuild the PCP full-text search index
 .SH SYNOPSIS
-\fBpmsearch_index\fR
+\fBpmsearch_daily\fR
 [\fB\-NV?\fR]
 [\fB\-a\fR \fIarchive\fR]
 [\fB\-o\fR \fIindex\fR]
 .SH DESCRIPTION
-.B pmsearch_index
+.B pmsearch_daily
 rebuilds the runtime full-text search index used by
 .BR pmsearch (1)
 and the
@@ -43,7 +43,7 @@ for all metric names, help text, and instance domain members,
 then builds a SQLite FTS5 search index using
 .BR newhelp (1).
 The resulting index file is written to
-.I $PCP_VAR_DIR/lib/pcp.search
+.I $PCP_VAR_DIR/lib/pmsearch.index
 by default.
 .PP
 Each night, the script copies the base index shipped with the
@@ -60,7 +60,7 @@ If
 is not running or no metrics are found, the command exits
 without modifying any existing index file.
 The base index at
-.I $PCP_SHARE_DIR/lib/pcp.search
+.I $PCP_SHARE_DIR/lib/pmsearch.index
 remains available as a fallback.
 .SH OPTIONS
 .TP 5
@@ -83,7 +83,7 @@ Show what would be done without writing any files.
 Write the index to
 .IR index
 instead of the default
-.IR $PCP_VAR_DIR/lib/pcp.search .
+.IR $PCP_VAR_DIR/lib/pmsearch.index .
 .TP
 \fB\-V\fR, \fB\-\-verbose\fR
 Verbose diagnostics.
@@ -93,12 +93,12 @@ Report the number of metrics extracted and the output path.
 Display usage message and exit.
 .SH FILES
 .TP 5
-.I $PCP_VAR_DIR/lib/pcp.search
+.I $PCP_VAR_DIR/lib/pmsearch.index
 Default output path for the runtime search index.
 This is a copy of the base index extended with instance data.
 When present, it is preferred over the base index.
 .TP
-.I $PCP_SHARE_DIR/lib/pcp.search
+.I $PCP_SHARE_DIR/lib/pmsearch.index
 Base search index shipped with the PCP package,
 built at package build time from help text source files.
 Copied as the starting point for each nightly rebuild;

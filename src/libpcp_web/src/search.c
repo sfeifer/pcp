@@ -797,9 +797,9 @@ pmSearchSetup(pmSearchModule *module, void *arg)
 	    smd->db = NULL;
 	}
     } else {
-	pmsprintf(nightly, sizeof(nightly), "%s/lib/pcp.search",
+	pmsprintf(nightly, sizeof(nightly), "%s/lib/pmsearch.index",
 		  pmGetConfig("PCP_VAR_DIR"));
-	pmsprintf(base, sizeof(base), "%s/lib/pcp.search",
+	pmsprintf(base, sizeof(base), "%s/lib/pmsearch.index",
 		  pmGetConfig("PCP_SHARE_DIR"));
 
 	rc = sqlite3_open_v2(nightly, &smd->db,
@@ -821,7 +821,7 @@ pmSearchSetup(pmSearchModule *module, void *arg)
 	    } else {
 		pmNotifyErr(LOG_WARNING,
 			"no pmsearch index found "
-			"(tried %s and %s); run pmsearch_index(1)",
+			"(tried %s and %s); run pmsearch_daily(1)",
 			nightly, base);
 		sqlite3_close(smd->db);
 		smd->db = NULL;

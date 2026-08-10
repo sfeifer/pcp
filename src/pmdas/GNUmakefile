@@ -44,7 +44,7 @@ PYPMDAS = gluster zswap unbound haproxy \
 	uwsgi rocestat hdb rds chrony db2
 
 SUBDIRS = $(CPMDAS) $(PLPMDAS) $(PYPMDAS)
-LDIRT = local.conf pmcd.conf local.root pcp.search
+LDIRT = local.conf pmcd.conf local.root pmsearch.index
 
 ifneq ("$(wildcard $(TOPDIR)/src/include/pcp/config.h)","")
 HAVE_UNIX_DOMAIN_SOCKETS = $(shell grep 'define HAVE_STRUCT_SOCKADDR_UN' $(TOPDIR)/src/include/pcp/config.h >/dev/null && echo yes)
@@ -100,11 +100,11 @@ ifneq "$(CROSS_COMPILING)" "yes"
 	    help_files="$$help_files $$f"; \
 	done; \
 	if [ -n "$$help_files" ]; then \
-	    $(TOPDIR)/src/newhelp/newhelp.static -S -o pcp.search $$help_files && \
+	    $(TOPDIR)/src/newhelp/newhelp.static -S -o pmsearch.index $$help_files && \
 	    $(INSTALL) -m 755 -d $(PCP_SHARE_DIR)/lib && \
-	    $(INSTALL) -m 644 pcp.search $(PCP_SHARE_DIR)/lib/pcp.search; \
+	    $(INSTALL) -m 644 pmsearch.index $(PCP_SHARE_DIR)/lib/pmsearch.index; \
 	    rc=$$?; \
-	    rm -f pcp.search; \
+	    rm -f pmsearch.index; \
 	    test $$rc -eq 0 || exit 1; \
 	fi
 endif

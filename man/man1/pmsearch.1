@@ -43,7 +43,7 @@ It uses a local SQLite FTS5 full-text search index.
 A base index is built at package install time containing
 help text for all PCP metrics from the source tree.
 Each night,
-.BR pmsearch_index (1)
+.BR pmsearch_daily (1)
 copies the base index and extends it with instance names
 (disk devices, network interfaces, etc.) from the running system.
 .PP
@@ -116,12 +116,12 @@ One line: percpu \fBidle\fR CPU time metric from /proc/stat
 .ESAMPLE
 .SH FILES
 .TP
-.I $PCP_VAR_DIR/lib/pcp.search
+.I $PCP_VAR_DIR/lib/pmsearch.index
 Nightly search index (SQLite FTS5 database), rebuilt by
-.BR pmsearch_index (1).
+.BR pmsearch_daily (1).
 This is a copy of the base index extended with runtime instance data.
 .TP
-.I $PCP_SHARE_DIR/lib/pcp.search
+.I $PCP_SHARE_DIR/lib/pmsearch.index
 Build-time base index containing all metrics from the PCP source tree.
 Used as a fallback when the nightly index is not yet available.
 .SH PCP ENVIRONMENT
@@ -151,7 +151,7 @@ option to obtain
 a list of the available debugging options and their meaning.
 .SH SEE ALSO
 .BR PCPIntro (1),
-.BR pmsearch_index (1),
+.BR pmsearch_daily (1),
 .BR pmproxy (1),
 .BR pmlogger (1)
 and

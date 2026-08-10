@@ -18,7 +18,7 @@ include $(TOPDIR)/src/include/builddefs
 CFILES = pmsearch.c
 CMDTARGET = pmsearch$(EXECSUFFIX)
 LLDLIBS	= $(PCP_WEBLIB)
-GENSCRIPT = crontab pmsearch_index.service
+GENSCRIPT = crontab pmsearch_daily.service
 LDIRT = $(GENSCRIPT)
 ifeq "$(TARGET_OS)" "mingw"
 LLDLIBS += -lws2_32
@@ -42,12 +42,12 @@ default:	$(CMDTARGET) $(GENSCRIPT)
 
 install:	default
 	$(INSTALL) -m 755 $(CMDTARGET) $(PCP_BIN_DIR)/$(CMDTARGET)
-	$(INSTALL) -m 755 pmsearch_index.sh $(PCP_BINADM_DIR)/pmsearch_index
+	$(INSTALL) -m 755 pmsearch_daily.sh $(PCP_BINADM_DIR)/pmsearch_daily
 	$(INSTALL) -m 755 -d $(PCP_SYSCONF_DIR)/pmsearch
 	$(INSTALL) -S $(PCP_SYSCONF_DIR)/pmproxy/pmproxy.conf $(PCP_SYSCONF_DIR)/pmsearch/pmsearch.conf
 ifeq ($(ENABLE_SYSTEMD),true)
-	$(INSTALL) -m 644 pmsearch_index.service $(PCP_SYSTEMDUNIT_DIR)/pmsearch_index.service
-	$(INSTALL) -m 644 pmsearch_index.timer $(PCP_SYSTEMDUNIT_DIR)/pmsearch_index.timer
+	$(INSTALL) -m 644 pmsearch_daily.service $(PCP_SYSTEMDUNIT_DIR)/pmsearch_daily.service
+	$(INSTALL) -m 644 pmsearch_daily.timer $(PCP_SYSTEMDUNIT_DIR)/pmsearch_daily.timer
 endif
 	$(INSTALL) -m 755 -d `dirname $(CRONTAB_INSTALL)`
 	$(INSTALL) -m 644 crontab $(CRONTAB_INSTALL)
@@ -58,7 +58,7 @@ default_pcp : default
 
 install_pcp : install
 
-pmsearch_index.service : pmsearch_index.service.in
+pmsearch_daily.service : pmsearch_daily.service.in
 	$(SED) <$< >$@ \
 	    -e 's;@CRONTAB_PATH@;'$(CRONTAB_PATH)';' \
 	    -e 's;@PCP_BINADM_DIR@;'$(PCP_BINADM_DIR)';' \

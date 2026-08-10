@@ -2,4 +2,4 @@
 # Performance Co-Pilot crontab entry for pmsearch index rebuild
 #
 # daily rebuild of the full-text search index
-20     0  *  *  *  @user@  @path@/pmsearch_index
+20     0  *  *  *  @user@  @path@/pmsearch_daily

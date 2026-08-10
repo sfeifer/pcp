@@ -20,11 +20,11 @@
 . $PCP_DIR/etc/pcp.env
 
 status=1
-tmp=`mktemp -d "$PCP_TMPFILE_DIR/pmsearch_index.XXXXXXXXX"` || exit 1
+tmp=`mktemp -d "$PCP_TMPFILE_DIR/pmsearch_daily.XXXXXXXXX"` || exit 1
 trap "rm -rf \"$tmp\" \"\$NEW\"; exit \$status" 0 1 2 3 15
 
 prog=`basename $0`
-INDEX="$PCP_VAR_DIR/lib/pcp.search"
+INDEX="$PCP_VAR_DIR/lib/pmsearch.index"
 
 cat > $tmp/usage << EOF
 Options:
@@ -177,7 +177,7 @@ fi
 
 if $SHOWME
 then
-    echo "$prog: would copy $PCP_SHARE_DIR/lib/pcp.search to $INDEX and add runtime data"
+    echo "$prog: would copy $PCP_SHARE_DIR/lib/pmsearch.index to $INDEX and add runtime data"
     status=0
     exit
 fi
@@ -197,7 +197,7 @@ fi
 # Start from the build-time base index (contains all metric help text).
 # The nightly update copies it, then adds/updates runtime data.
 NEW="$INDEX.new.$$"
-BASE="$PCP_SHARE_DIR/lib/pcp.search"
+BASE="$PCP_SHARE_DIR/lib/pmsearch.index"
 if [ -f "$BASE" ]
 then
     cp "$BASE" "$NEW" || exit

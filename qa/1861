@@ -1,4 +1,16 @@
+#!/bin/sh
+# PCP QA Test No. 1861
+# Exercise inserting metrics from a PMDA without build-time help files
+# (e.g. Python PMDAs) into the pmsearch SQLite FTS5 index using the
+# @ M format that pmsearch_daily generates at runtime.
+#
+# Copyright (c) 2026 Red Hat.  All Rights Reserved.
+#
 
+seq=`basename $0`
+echo "QA output created by $seq"
+
+# get standard environment, filters and checks
 . ./common.product
 . ./common.filter
 . ./common.check
@@ -24,13 +36,13 @@ help=$PCP_PMDAS_DIR/sample/help
 
 # --- Step 1: Build base index from sample PMDA help files ---
 mkdir -p $tmp.share/lib
-newhelp -S -o $tmp.share/lib/pcp.search $help 2>&1 \
+newhelp -S -o $tmp.share/lib/pmsearch.index $help 2>&1 \
     | sed -e "s,$tmp,TMP,g"
 echo "Base index built"
 
-# --- Step 2: Copy base to nightly location (as pmsearch_index does) ---
+# --- Step 2: Copy base to nightly location (as pmsearch_daily does) ---
 mkdir -p $tmp.var/lib
-cp $tmp.share/lib/pcp.search $tmp.var/lib/pcp.search
+cp $tmp.share/lib/pmsearch.index $tmp.var/lib/pmsearch.index
 echo "Nightly index initialized from base"
 
 export PCP_VAR_DIR=$tmp.var
@@ -43,7 +55,7 @@ pmsearch -C "qa_python"
 
 # --- Step 4: Create synthetic @ M entries mirroring Python PMDA patterns ---
 # Python PMDAs define help text via add_metric() in code, not help files.
-# pmsearch_index scrapes running PMDAs with pminfo -tT and generates
+# pmsearch_daily scrapes running PMDAs with pminfo -tT and generates
 # @ M name<TAB>indom<TAB>oneline entries for newhelp -S.
 #
 # Pattern (a): one-line help only (bpftrace style - most common)
@@ -63,7 +75,7 @@ EOF
 # --- Step 5: Insert Python PMDA metrics into nightly index ---
 echo
 echo "=== Inserting Python PMDA metrics ==="
-newhelp -S -o $tmp.var/lib/pcp.search $tmp.helptext 2>&1 \
+newhelp -S -o $tmp.var/lib/pmsearch.index $tmp.helptext 2>&1 \
     | sed -e "s,$tmp,TMP,g"
 echo "Python PMDA metrics inserted"
 

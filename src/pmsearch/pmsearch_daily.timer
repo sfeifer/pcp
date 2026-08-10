@@ -9,7 +9,7 @@ Persistent=true
 # processing at 00:15:00)
 OnBootSec=10min
 OnCalendar=*-*-* 00:20:00
-Unit=pmsearch_index.service
+Unit=pmsearch_daily.service
 
 [Install]
 WantedBy=timers.target
