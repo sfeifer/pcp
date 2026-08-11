@@ -117,7 +117,12 @@ FILENAME == ARGV[1] {
 /^Help:$/ { next }
 /^Full Help: Error:/ { skip = 1; next }
 skip { next }
-{ print }
+{
+    if (substr($0, 1, 1) == "@")
+	printf " %s\n", $0
+    else
+	print
+}
 ' "$tmp/metric_indom" - > $tmp/helptext
 
 nhelplines=`wc -l < $tmp/helptext`

@@ -324,6 +324,7 @@ newentry_search(char *buf)
 	    if (verbose)
 		fprintf(stderr, "%s: [%s:%d] instance entry missing tab separator\n",
 			pmGetProgname(), filename, ln);
+	    if (!status) status = 1;
 	    return;
 	}
 	inst_name = p;
@@ -375,6 +376,7 @@ newentry_search(char *buf)
 	    if (verbose)
 		fprintf(stderr, "%s: [%s:%d] metric entry missing first tab separator\n",
 			pmGetProgname(), filename, ln);
+	    if (!status) status = 1;
 	    return;
 	}
 	indom_str = p;
@@ -386,6 +388,7 @@ newentry_search(char *buf)
 	    if (verbose)
 		fprintf(stderr, "%s: [%s:%d] metric entry missing second tab separator\n",
 			pmGetProgname(), filename, ln);
+	    if (!status) status = 1;
 	    return;
 	}
 
