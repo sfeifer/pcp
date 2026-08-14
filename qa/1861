@@ -19,6 +19,8 @@ which pmsearch >/dev/null 2>&1 || \
     _notrun "pmsearch not installed"
 which newhelp >/dev/null 2>&1 || \
     _notrun "newhelp not installed"
+newhelp -\? 2>&1 | grep -q '\-S, --search' || \
+    _notrun "newhelp not built with SQLite search index support"
 
 _cleanup()
 {
