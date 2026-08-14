@@ -12481,7 +12481,8 @@ fi
     CPPFLAGS="$save_CPPFLAGS"
 fi
 if test $have_sqlite3 = false; then
-    as_fn_error $? "SQLite >= 3.9.0 with FTS5 support is required" "$LINENO" 5
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: SQLite >= 3.9.0 with FTS5 not found, pmsearch will not be built" >&5
+printf "%s\n" "$as_me: WARNING: SQLite >= 3.9.0 with FTS5 not found, pmsearch will not be built" >&2;}
 fi
 HAVE_SQLITE3=$have_sqlite3
 

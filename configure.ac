@@ -2041,7 +2041,7 @@ return sts;
     CPPFLAGS="$save_CPPFLAGS"
 fi
 if test $have_sqlite3 = false; then
-    AC_MSG_ERROR([SQLite >= 3.9.0 with FTS5 support is required])
+    AC_MSG_WARN([SQLite >= 3.9.0 with FTS5 not found, pmsearch will not be built])
 fi
 AC_SUBST(HAVE_SQLITE3, [$have_sqlite3])
 AC_SUBST(lib_for_sqlite3)

@@ -15,6 +15,9 @@
 TOPDIR = ../..
 include $(TOPDIR)/src/include/builddefs
 
+default:	build-me
+
+ifeq "$(HAVE_SQLITE3)" "true"
 CFILES = pmsearch.c
 CMDTARGET = pmsearch$(EXECSUFFIX)
 LLDLIBS	= $(PCP_WEBLIB)
@@ -38,7 +41,7 @@ CRONTAB_PATH = $(PCP_SYSCONF_DIR)/pmsearch/crontab
 CRONTAB_INSTALL = $(CRONTAB_PATH)
 endif
 
-default:	$(CMDTARGET) $(GENSCRIPT)
+build-me:	$(CMDTARGET) $(GENSCRIPT)
 
 install:	default
 	$(INSTALL) -m 755 $(CMDTARGET) $(PCP_BIN_DIR)/$(CMDTARGET)
@@ -51,12 +54,6 @@ ifeq ($(ENABLE_SYSTEMD),true)
 endif
 	$(INSTALL) -m 755 -d `dirname $(CRONTAB_INSTALL)`
 	$(INSTALL) -m 644 crontab $(CRONTAB_INSTALL)
-
-include $(BUILDRULES)
-
-default_pcp : default
-
-install_pcp : install
 
 pmsearch_daily.service : pmsearch_daily.service.in
 	$(SED) <$< >$@ \
@@ -73,3 +70,14 @@ crontab : crontab.in
 	    -e 's;@user@;'$(CRONTAB_USER)';' \
 	    -e 's;@path@;'$(PCP_BINADM_DIR)';' \
 	# END
+
+else
+build-me:
+install:
+endif
+
+include $(BUILDRULES)
+
+default_pcp : default
+
+install_pcp : install

@@ -95,6 +95,7 @@ install_pcp :: default_pcp
 	$(INSTALL) -m 644 local.conf indom.conf $(PCP_ETC_DIR)/pcp
 	$(INSTALL) -m 644 -t $(PCP_PMNS_DIR)/local.root local.root $(PCP_PMNSADM_DIR)/local.root
 ifneq "$(CROSS_COMPILING)" "yes"
+ifeq "$(HAVE_SQLITE3)" "true"
 	help_files=""; \
 	for f in `find . -maxdepth 2 -name help -type f`; do \
 	    help_files="$$help_files $$f"; \
@@ -107,6 +108,7 @@ ifneq "$(CROSS_COMPILING)" "yes"
 	    rm -f pmsearch.index; \
 	    test $$rc -eq 0 || exit 1; \
 	fi
+endif
 endif
 
 include $(BUILDRULES)
