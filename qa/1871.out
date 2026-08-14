@@ -13,6 +13,23 @@ Help: Random number of instances, that change with time.  Instance "m-00" (0)
 is always present, while the others are numbered 1 .. 49 and named "m-01"
 .. "m-99"
 === Search on random ===
+Type: indom
+Name: 29.3
+InDom: 29.3
+One line: Instance domain "mirage" for sample PMDA
+Help: Random number of instances, that change with time.  Instance "m-00" (0)
+is always present, while the others are numbered 1 .. 49 and named "m-01"
+.. "m-99"
+
+Type: indom
+Name: 29.6
+InDom: 29.6
+One line: Instance domain "dodgey" for sample PMDA.
+Help: Instances for an unreliable instance domain, where the instances can
+under certain conditions (random or controlled) return holes, errors,
+and other interesting scenarios for testing.  A sample.dodgey.control
+metric store controls this instance domain.
+
 Type: metric
 Name: sample.drift
 InDom: none
@@ -23,6 +40,27 @@ with a change in direction after on average 4 consecutive samples.
 
 Use pmStore() to modify the instantaneous value, which becomes the new
 expected mean.
+
+Type: indom
+Name: 29.12
+InDom: 29.12
+One line: Instance domain "procs" for sample PMDA
+Help: Simulated and small instance domain that mimics the behaviour of the
+process instance domain from the proc PMDA.
+
+The first 5 instances are fixed.  Then next 15 instances are variable
+such that each time an associated metric is fetched:
+- if an instance is currently defined, it may disappear with
+  probability 0.075
+- for each instance that is not defined, a new instance may
+  appear with probability 0.075
+
+The internal instance identifiers mimic PIDs and are monotonically
+increasing up to 1000, when they wrap (duplicates are obviously
+avoided).
+
+The external instance names are the instance number, space, then
+a random "executable" name.
 
 Type: metric
 Name: sample.byte_rate
@@ -50,14 +88,6 @@ Help: The metric is a set of 5 instantaneous values, drawn at random from the
 range 0 to 100.  The number of instances "visible" is controlled by
 sample.dodgey.control.
 
-Type: indom
-Name: 29.3
-InDom: 29.3
-One line: Instance domain "mirage" for sample PMDA
-Help: Random number of instances, that change with time.  Instance "m-00" (0)
-is always present, while the others are numbered 1 .. 49 and named "m-01"
-.. "m-99"
-
 Type: metric
 Name: sample.scramble.bin
 InDom: 29.9
@@ -68,15 +98,6 @@ Help: Like sample.bin, except
 
 Designed to help testing instance matching between pmFetch calls
 for PCP clients.
-
-Type: indom
-Name: 29.6
-InDom: 29.6
-One line: Instance domain "dodgey" for sample PMDA.
-Help: Instances for an unreliable instance domain, where the instances can
-under certain conditions (random or controlled) return holes, errors,
-and other interesting scenarios for testing.  A sample.dodgey.control
-metric store controls this instance domain.
 
 Type: metric
 Name: sample.dodgey.control
@@ -96,27 +117,6 @@ available is changed according to the following probabilities ...
   0.9 some number of instances in the range 0 to 5, selected at random
       from the underlying 5 instances.
   0.1 error (PM_ERR_NOAGENT or PM_ERR_AGAIN or PM_ERR_APPVERSION)
-
-Type: indom
-Name: 29.12
-InDom: 29.12
-One line: Instance domain "procs" for sample PMDA
-Help: Simulated and small instance domain that mimics the behaviour of the
-process instance domain from the proc PMDA.
-
-The first 5 instances are fixed.  Then next 15 instances are variable
-such that each time an associated metric is fetched:
-- if an instance is currently defined, it may disappear with
-  probability 0.075
-- for each instance that is not defined, a new instance may
-  appear with probability 0.075
-
-The internal instance identifiers mimic PIDs and are monotonically
-increasing up to 1000, when they wrap (duplicates are obviously
-avoided).
-
-The external instance names are the instance number, space, then
-a random "executable" name.
 === Search on interesting ===
 Type: indom
 Name: 29.6

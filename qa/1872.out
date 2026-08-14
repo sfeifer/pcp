@@ -27,10 +27,31 @@ Index built
     "limit": 10,
     "results": [
         {
+            "name": "29.3",
+            "type": "indom",
+            "indom": "29.3",
+            "oneline": "Instance domain \"mirage\" for sample PMDA",
+            "helptext": "Random number of instances, that change with time.  Instance \"m-00\" (0)\nis always present, while the others are numbered 1 .. 49 and named \"m-01\"\n.. \"m-99\""
+        },
+        {
+            "name": "29.6",
+            "type": "indom",
+            "indom": "29.6",
+            "oneline": "Instance domain \"dodgey\" for sample PMDA.",
+            "helptext": "Instances for an unreliable instance domain, where the instances can\nunder certain conditions (random or controlled) return holes, errors,\nand other interesting scenarios for testing.  A sample.dodgey.control\nmetric store controls this instance domain."
+        },
+        {
             "name": "sample.drift",
             "type": "metric",
             "oneline": "A random trended metric",
             "helptext": "This metric returns a random value (expected mean is approximately 200),\nsubject to a trending pattern such that the sequence is mainly monotonic,\nwith a change in direction after on average 4 consecutive samples.\n\nUse pmStore() to modify the instantaneous value, which becomes the new\nexpected mean."
+        },
+        {
+            "name": "29.12",
+            "type": "indom",
+            "indom": "29.12",
+            "oneline": "Instance domain \"procs\" for sample PMDA",
+            "helptext": "Simulated and small instance domain that mimics the behaviour of the\nprocess instance domain from the proc PMDA.\n\nThe first 5 instances are fixed.  Then next 15 instances are variable\nsuch that each time an associated metric is fetched:\n- if an instance is currently defined, it may disappear with\n  probability 0.075\n- for each instance that is not defined, a new instance may\n  appear with probability 0.075\n\nThe internal instance identifiers mimic PIDs and are monotonically\nincreasing up to 1000, when they wrap (duplicates are obviously\navoided).\n\nThe external instance names are the instance number, space, then\na random \"executable\" name."
         },
         {
             "name": "sample.byte_rate",
@@ -58,13 +79,6 @@ Index built
             "helptext": "The metric is a set of 5 instantaneous values, drawn at random from the\nrange 0 to 100.  The number of instances \"visible\" is controlled by\nsample.dodgey.control."
         },
         {
-            "name": "29.3",
-            "type": "indom",
-            "indom": "29.3",
-            "oneline": "Instance domain \"mirage\" for sample PMDA",
-            "helptext": "Random number of instances, that change with time.  Instance \"m-00\" (0)\nis always present, while the others are numbered 1 .. 49 and named \"m-01\"\n.. \"m-99\""
-        },
-        {
             "name": "sample.scramble.bin",
             "type": "metric",
             "indom": "29.9",
@@ -72,24 +86,10 @@ Index built
             "helptext": "Like sample.bin, except\n1. instances are missing with probability 0.33\n2. order of the instances from pmFetch is random\n\nDesigned to help testing instance matching between pmFetch calls\nfor PCP clients."
         },
         {
-            "name": "29.6",
-            "type": "indom",
-            "indom": "29.6",
-            "oneline": "Instance domain \"dodgey\" for sample PMDA.",
-            "helptext": "Instances for an unreliable instance domain, where the instances can\nunder certain conditions (random or controlled) return holes, errors,\nand other interesting scenarios for testing.  A sample.dodgey.control\nmetric store controls this instance domain."
-        },
-        {
             "name": "sample.dodgey.control",
             "type": "metric",
             "oneline": "control values retured for sample.dodgey.value",
             "helptext": "If sample.dodgey.control is <= 0, then this is returned as the \"numval\"\ncomponent in the pmResult (0 => no values available, less than 0 =>\nvarious errors).\n\nIf sample.dodgey.control is between 1 and 5 (inclusive), then this many\nof the values will be \"visible\".  The values will be selected in order\nfrom the underlying 5 instances.\n\nIf sample.dodgey.control is > 5, then at random times (between 1 and\nsample.dodgey.control fetches of the metric), the number of instances\navailable is changed according to the following probabilities ...\n  0.9 some number of instances in the range 0 to 5, selected at random\n      from the underlying 5 instances.\n  0.1 error (PM_ERR_NOAGENT or PM_ERR_AGAIN or PM_ERR_APPVERSION)"
-        },
-        {
-            "name": "29.12",
-            "type": "indom",
-            "indom": "29.12",
-            "oneline": "Instance domain \"procs\" for sample PMDA",
-            "helptext": "Simulated and small instance domain that mimics the behaviour of the\nprocess instance domain from the proc PMDA.\n\nThe first 5 instances are fixed.  Then next 15 instances are variable\nsuch that each time an associated metric is fetched:\n- if an instance is currently defined, it may disappear with\n  probability 0.075\n- for each instance that is not defined, a new instance may\n  appear with probability 0.075\n\nThe internal instance identifiers mimic PIDs and are monotonically\nincreasing up to 1000, when they wrap (duplicates are obviously\navoided).\n\nThe external instance names are the instance number, space, then\na random \"executable\" name."
         }
     ]
 }
@@ -178,13 +178,6 @@ Index built
             "helptext": "A relatively large instance <b>domain</b>, with hundreds of numeric instances."
         },
         {
-            "name": "sample.many.int",
-            "type": "metric",
-            "indom": "29.8",
-            "oneline": "variable sized instance <b>domain</b>",
-            "helptext": "store a value in sample.many.count to change the number of instances\nthat appear in sample.many.int's instance <b>domain</b>"
-        },
-        {
             "name": "29.11",
             "type": "indom",
             "indom": "29.11",
@@ -220,12 +213,6 @@ Index built
             "helptext": "A varable size set of instances controlled by sample.many.count"
         },
         {
-            "name": "sample.many.count",
-            "type": "metric",
-            "oneline": "number of instances in sample.many.int's <b>domain</b>",
-            "helptext": "store a value in sample.many.count to change the number of instances\nthat appear in sample.many.int's instance <b>domain</b>"
-        },
-        {
             "name": "29.7",
             "type": "indom",
             "indom": "29.7",
@@ -238,6 +225,20 @@ Index built
             "indom": "29.4",
             "oneline": "Instance <b>domain</b> \"family\" for sample PMDA.",
             "helptext": "A fixed set of instances:\n    \"colleen\", \"terry\", \"emma\", \"cathy\" and \"fat bald bastard\""
+        },
+        {
+            "name": "29.2",
+            "type": "indom",
+            "indom": "29.2",
+            "oneline": "Instance <b>domain</b> \"bin\" for sample PMDA",
+            "helptext": "Universally 9 instances numbered 100 .. 900 in steps of 100, and named\n\"bin-100\" .. \"bin-900\""
+        },
+        {
+            "name": "29.9",
+            "type": "indom",
+            "indom": "29.9",
+            "oneline": "Instance <b>domain</b> \"scramble\" for sample PMDA.",
+            "helptext": "Several constant instances, instances reordered on successive pmFetch\ncalls, and sometimes (probability 0.33) some instances are missing."
         }
     ]
 }
@@ -249,61 +250,74 @@ Index built
     "limit": 10,
     "results": [
         {
-            "name": "<b>sample</b>.long.bin",
-            "type": "metric",
+            "name": "29.8",
+            "type": "indom",
+            "indom": "29.8",
+            "oneline": "Instance domain \"many\" for sample PMDA.",
+            "helptext": "A varable size set of instances controlled by sample.many.count"
+        },
+        {
+            "name": "29.7",
+            "type": "indom",
+            "indom": "29.7",
+            "oneline": "Instance domain \"dynamic\" for sample PMDA.",
+            "helptext": "Instances come from $PCP_PMDAS_DIR/sample/dynamic.indom, if it exists."
+        },
+        {
+            "name": "29.11",
+            "type": "indom",
+            "indom": "29.11",
+            "oneline": "Instance domain \"ghosts\" for sample PMDA.",
+            "helptext": "Instances are the names of some famous ghosts."
+        },
+        {
+            "name": "29.10",
+            "type": "indom",
+            "indom": "29.10",
+            "oneline": "Instance domain \"events\" for sample PMDA.",
+            "helptext": "Instances \"fungus\" and \"bogus\" for testing event metrics indoms."
+        },
+        {
+            "name": "29.1",
+            "type": "indom",
+            "indom": "29.1",
+            "oneline": "Instance domain \"colour\" for sample PMDA",
+            "helptext": "Universally 3 instances, \"red\" (0), \"green\" (1) and \"blue\" (3)."
+        },
+        {
+            "name": "29.5",
+            "type": "indom",
+            "indom": "29.5",
+            "oneline": "Instance domain \"hordes\" for sample PMDA.",
+            "helptext": "A relatively large instance domain, with hundreds of numeric instances."
+        },
+        {
+            "name": "29.4",
+            "type": "indom",
+            "indom": "29.4",
+            "oneline": "Instance domain \"family\" for sample PMDA.",
+            "helptext": "A fixed set of instances:\n    \"colleen\", \"terry\", \"emma\", \"cathy\" and \"fat bald bastard\""
+        },
+        {
+            "name": "29.2",
+            "type": "indom",
             "indom": "29.2",
-            "oneline": "like sample.bin but type 32"
+            "oneline": "Instance domain \"bin\" for sample PMDA",
+            "helptext": "Universally 9 instances numbered 100 .. 900 in steps of 100, and named\n\"bin-100\" .. \"bin-900\""
         },
         {
-            "name": "<b>sample</b>.ulong.bin",
-            "type": "metric",
-            "indom": "29.2",
-            "oneline": "like sample.bin but type U32"
+            "name": "29.6",
+            "type": "indom",
+            "indom": "29.6",
+            "oneline": "Instance domain \"dodgey\" for sample PMDA.",
+            "helptext": "Instances for an unreliable instance domain, where the instances can\nunder certain conditions (random or controlled) return holes, errors,\nand other interesting scenarios for testing.  A sample.dodgey.control\nmetric store controls this instance domain."
         },
         {
-            "name": "<b>sample</b>.longlong.bin",
-            "type": "metric",
-            "indom": "29.2",
-            "oneline": "like sample.bin but type 64"
-        },
-        {
-            "name": "<b>sample</b>.float.bin",
-            "type": "metric",
-            "indom": "29.2",
-            "oneline": "like sample.bin but type FLOAT"
-        },
-        {
-            "name": "<b>sample</b>.double.bin",
-            "type": "metric",
-            "indom": "29.2",
-            "oneline": "like sample.bin but type DOUBLE"
-        },
-        {
-            "name": "<b>sample</b>.string.bin",
-            "type": "metric",
-            "indom": "29.2",
-            "oneline": "a string-valued version of sample.bin"
-        },
-        {
-            "name": "<b>SAMPLE</b>.0.1000",
-            "type": "metric",
-            "oneline": "dynamic sample.secret.bar metric",
-            "helptext": "Value \"foo\"."
-        },
-        {
-            "name": "<b>sample</b>.const_rate.gradient",
-            "type": "metric",
-            "oneline": "rate per second to set sample.const_rate.value, writable"
-        },
-        {
-            "name": "<b>sample</b>.string.null",
-            "type": "metric",
-            "oneline": "a zero length string"
-        },
-        {
-            "name": "<b>sample</b>.aggregate.null",
-            "type": "metric",
-            "oneline": "a zero length aggregate"
+            "name": "29.9",
+            "type": "indom",
+            "indom": "29.9",
+            "oneline": "Instance domain \"scramble\" for sample PMDA.",
+            "helptext": "Several constant instances, instances reordered on successive pmFetch\ncalls, and sometimes (probability 0.33) some instances are missing."
         }
     ]
 }
@@ -391,10 +405,11 @@ Index built
     "limit": 1,
     "results": [
         {
-            "name": "sample.drift",
-            "type": "metric",
-            "oneline": "A random trended metric",
-            "helptext": "This metric returns a random value (expected mean is approximately 200),\nsubject to a trending pattern such that the sequence is mainly monotonic,\nwith a change in direction after on average 4 consecutive samples.\n\nUse pmStore() to modify the instantaneous value, which becomes the new\nexpected mean."
+            "name": "29.3",
+            "type": "indom",
+            "indom": "29.3",
+            "oneline": "Instance domain \"mirage\" for sample PMDA",
+            "helptext": "Random number of instances, that change with time.  Instance \"m-00\" (0)\nis always present, while the others are numbered 1 .. 49 and named \"m-01\"\n.. \"m-99\""
         }
     ]
 }
@@ -406,10 +421,11 @@ Index built
     "limit": 1,
     "results": [
         {
-            "name": "sample.byte_rate",
-            "type": "metric",
-            "oneline": "instantaneous bytes/second ",
-            "helptext": "random value in the range (0,1023), so avg value is 512 bytes/second"
+            "name": "29.6",
+            "type": "indom",
+            "indom": "29.6",
+            "oneline": "Instance domain \"dodgey\" for sample PMDA.",
+            "helptext": "Instances for an unreliable instance domain, where the instances can\nunder certain conditions (random or controlled) return holes, errors,\nand other interesting scenarios for testing.  A sample.dodgey.control\nmetric store controls this instance domain."
         }
     ]
 }
@@ -515,8 +531,23 @@ Index built
     "limit": 10,
     "results": [
         {
+            "name": "29.3",
+            "type": "indom",
+            "indom": "29.3"
+        },
+        {
+            "name": "29.6",
+            "type": "indom",
+            "indom": "29.6"
+        },
+        {
             "name": "sample.drift",
             "type": "metric"
+        },
+        {
+            "name": "29.12",
+            "type": "indom",
+            "indom": "29.12"
         },
         {
             "name": "sample.byte_rate",
@@ -536,28 +567,13 @@ Index built
             "indom": "29.6"
         },
         {
-            "name": "29.3",
-            "type": "indom",
-            "indom": "29.3"
-        },
-        {
             "name": "sample.scramble.bin",
             "type": "metric",
             "indom": "29.9"
         },
         {
-            "name": "29.6",
-            "type": "indom",
-            "indom": "29.6"
-        },
-        {
             "name": "sample.dodgey.control",
             "type": "metric"
-        },
-        {
-            "name": "29.12",
-            "type": "indom",
-            "indom": "29.12"
         }
     ]
 }
@@ -675,10 +691,31 @@ Index built
     "limit": 10,
     "results": [
         {
+            "name": "29.3",
+            "type": "indom",
+            "indom": "29.3",
+            "oneline": "Instance domain \"mirage\" for sample PMDA",
+            "helptext": "Random number of instances, that change with time.  Instance \"m-00\" (0)\nis always present, while the others are numbered 1 .. 49 and named \"m-01\"\n.. \"m-99\""
+        },
+        {
+            "name": "29.6",
+            "type": "indom",
+            "indom": "29.6",
+            "oneline": "Instance domain \"dodgey\" for sample PMDA.",
+            "helptext": "Instances for an unreliable instance domain, where the instances can\nunder certain conditions (random or controlled) return holes, errors,\nand other interesting scenarios for testing.  A sample.dodgey.control\nmetric store controls this instance domain."
+        },
+        {
             "name": "sample.drift",
             "type": "metric",
             "oneline": "A random trended metric",
             "helptext": "This metric returns a random value (expected mean is approximately 200),\nsubject to a trending pattern such that the sequence is mainly monotonic,\nwith a change in direction after on average 4 consecutive samples.\n\nUse pmStore() to modify the instantaneous value, which becomes the new\nexpected mean."
+        },
+        {
+            "name": "29.12",
+            "type": "indom",
+            "indom": "29.12",
+            "oneline": "Instance domain \"procs\" for sample PMDA",
+            "helptext": "Simulated and small instance domain that mimics the behaviour of the\nprocess instance domain from the proc PMDA.\n\nThe first 5 instances are fixed.  Then next 15 instances are variable\nsuch that each time an associated metric is fetched:\n- if an instance is currently defined, it may disappear with\n  probability 0.075\n- for each instance that is not defined, a new instance may\n  appear with probability 0.075\n\nThe internal instance identifiers mimic PIDs and are monotonically\nincreasing up to 1000, when they wrap (duplicates are obviously\navoided).\n\nThe external instance names are the instance number, space, then\na random \"executable\" name."
         },
         {
             "name": "sample.byte_rate",
@@ -706,13 +743,6 @@ Index built
             "helptext": "The metric is a set of 5 instantaneous values, drawn at random from the\nrange 0 to 100.  The number of instances \"visible\" is controlled by\nsample.dodgey.control."
         },
         {
-            "name": "29.3",
-            "type": "indom",
-            "indom": "29.3",
-            "oneline": "Instance domain \"mirage\" for sample PMDA",
-            "helptext": "Random number of instances, that change with time.  Instance \"m-00\" (0)\nis always present, while the others are numbered 1 .. 49 and named \"m-01\"\n.. \"m-99\""
-        },
-        {
             "name": "sample.scramble.bin",
             "type": "metric",
             "indom": "29.9",
@@ -720,24 +750,10 @@ Index built
             "helptext": "Like sample.bin, except\n1. instances are missing with probability 0.33\n2. order of the instances from pmFetch is random\n\nDesigned to help testing instance matching between pmFetch calls\nfor PCP clients."
         },
         {
-            "name": "29.6",
-            "type": "indom",
-            "indom": "29.6",
-            "oneline": "Instance domain \"dodgey\" for sample PMDA.",
-            "helptext": "Instances for an unreliable instance domain, where the instances can\nunder certain conditions (random or controlled) return holes, errors,\nand other interesting scenarios for testing.  A sample.dodgey.control\nmetric store controls this instance domain."
-        },
-        {
             "name": "sample.dodgey.control",
             "type": "metric",
             "oneline": "control values retured for sample.dodgey.value",
             "helptext": "If sample.dodgey.control is <= 0, then this is returned as the \"numval\"\ncomponent in the pmResult (0 => no values available, less than 0 =>\nvarious errors).\n\nIf sample.dodgey.control is between 1 and 5 (inclusive), then this many\nof the values will be \"visible\".  The values will be selected in order\nfrom the underlying 5 instances.\n\nIf sample.dodgey.control is > 5, then at random times (between 1 and\nsample.dodgey.control fetches of the metric), the number of instances\navailable is changed according to the following probabilities ...\n  0.9 some number of instances in the range 0 to 5, selected at random\n      from the underlying 5 instances.\n  0.1 error (PM_ERR_NOAGENT or PM_ERR_AGAIN or PM_ERR_APPVERSION)"
-        },
-        {
-            "name": "29.12",
-            "type": "indom",
-            "indom": "29.12",
-            "oneline": "Instance domain \"procs\" for sample PMDA",
-            "helptext": "Simulated and small instance domain that mimics the behaviour of the\nprocess instance domain from the proc PMDA.\n\nThe first 5 instances are fixed.  Then next 15 instances are variable\nsuch that each time an associated metric is fetched:\n- if an instance is currently defined, it may disappear with\n  probability 0.075\n- for each instance that is not defined, a new instance may\n  appear with probability 0.075\n\nThe internal instance identifiers mimic PIDs and are monotonically\nincreasing up to 1000, when they wrap (duplicates are obviously\navoided).\n\nThe external instance names are the instance number, space, then\na random \"executable\" name."
         }
     ]
 }

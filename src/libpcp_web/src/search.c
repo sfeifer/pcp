@@ -231,9 +231,11 @@ search_query_table(sqlite3 *db, pmSearchTextRequest *request,
 	" highlight(docs, 1, '<b>', '</b>'),"
 	" highlight(docs, 2, '<b>', '</b>')"
 	" FROM docs WHERE docs MATCH ?%S"
-	" ORDER BY bm25(docs, 9.0, 4.0, 2.0)"
+	" ORDER BY CASE WHEN type = %i"
+	" THEN bm25(docs, 9.0, 4.0, 2.0) * 2.0"
+	" ELSE bm25(docs, 9.0, 4.0, 2.0) END"
 	" LIMIT ? OFFSET ?",
-	type_filter);
+	type_filter, SEARCH_DOC_INDOM);
 
     rc = sqlite3_prepare_v2(db, sql, sdslen(sql), &stmt, NULL);
     sdsfree(sql);
