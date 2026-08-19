@@ -95,7 +95,7 @@ search_build_match(pmSearchTextRequest *request)
 		cols = sdscat(cols, " ");
 	    cols = sdscat(cols, "helptext");
 	}
-	match = sdscatfmt(sdsempty(), "{%S} : %S", cols, request->query);
+	match = sdscatfmt(sdsempty(), "{%S} : (%S)", cols, request->query);
 	sdsfree(cols);
     } else {
 	match = sdsnew(request->query);
