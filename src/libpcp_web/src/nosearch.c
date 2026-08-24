@@ -105,8 +105,6 @@ pmSearchClose(pmSearchModule *module)
 
 /* --- stubs for schema.c / keys.c compatibility --- */
 
-extern void keys_slots_end_phase(void *);
-
 void
 keysSearchInit(struct dict *config)
 {
@@ -116,12 +114,6 @@ keysSearchInit(struct dict *config)
 void
 keysSearchClose(void)
 {
-}
-
-void
-keys_load_search_schema(void *arg)
-{
-    keys_slots_end_phase(arg);
 }
 
 void

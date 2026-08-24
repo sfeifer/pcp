@@ -30,7 +30,6 @@ struct keySlots;
 extern void keysSearchInit(struct dict *);
 extern void keysSearchClose(void);
 
-extern void keys_load_search_schema(void *);
 extern void keys_search_text_add(struct keySlots *, pmSearchTextType,
 		const char *, const char *, const char *, const char *, void *);
 
