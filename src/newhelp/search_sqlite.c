@@ -186,7 +186,10 @@ search_sqlite_add(const char *name, const char *oneline,
     if (sqlite3_step(search_lookup) == SQLITE_ROW) {
 	sqlite3_int64 rowid = sqlite3_column_int64(search_lookup, 0);
 	sqlite3_bind_int64(search_indom_delete, 1, rowid);
-	sqlite3_step(search_indom_delete);
+	if (sqlite3_step(search_indom_delete) != SQLITE_DONE) {
+	    fprintf(stderr, "search_sqlite_add: indom delete: %s\n",
+		    sqlite3_errmsg(search_db));
+	}
 	sqlite3_reset(search_indom_delete);
 	sqlite3_bind_int64(search_delete, 1, rowid);
 	if (sqlite3_step(search_delete) != SQLITE_DONE) {
@@ -212,7 +215,10 @@ search_sqlite_add(const char *name, const char *oneline,
 	sqlite3_int64 docid = sqlite3_last_insert_rowid(search_db);
 	sqlite3_bind_int64(search_indom_insert, 1, docid);
 	sqlite3_bind_text(search_indom_insert, 2, indom, -1, SQLITE_STATIC);
-	sqlite3_step(search_indom_insert);
+	if (sqlite3_step(search_indom_insert) != SQLITE_DONE) {
+	    fprintf(stderr, "search_sqlite_add: indom insert: %s\n",
+		    sqlite3_errmsg(search_db));
+	}
 	sqlite3_reset(search_indom_insert);
     }
 
