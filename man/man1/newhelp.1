@@ -18,7 +18,7 @@
 \f3newhelp\f1 \- generate a performance metrics help database
 .SH SYNOPSIS
 \f3$PCP_BINADM_DIR/newhelp\f1
-[\f3\-vV?\f1]
+[\f3\-SvV?\f1]
 [\f3\-D\f1 \f2debug\f1]
 [\f3\-n\f1 \f2pmnsfile\f1]
 [\f3\-o\f1 \f2outputfile\f1]
@@ -132,6 +132,13 @@ Load an alternative Performance Metrics Name Space
 .RB ( PMNS (5))
 from the file
 .IR pmnsfile .
+.TP
+\fB\-S\fR, \fB\-\-search\fR
+Build a search index rather than the usual help text database.
+In this mode the output file (which must be named with the
+.B \-o
+option) is a SQLite FTS5 database used by
+.BR pmsearch (1).
 .TP
 \fB\-v\fR \fIversion\fR, \fB\-\-version\fR=\fIversion\fR
 Set output version.
