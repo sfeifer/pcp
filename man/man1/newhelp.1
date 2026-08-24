@@ -52,13 +52,24 @@ in which case the
 .B \-o
 flag must be given.
 .PP
-If the output file name is determined to be
+In the normal mode of operation, if the output file name is determined to be
 .BR foo ,
 .B newhelp
 will create
 .B foo.dir
 and
 .BR foo.pag .
+When the
+.B \-S
+.RB ( \-\-search )
+option is given, no
+.B .dir
+or
+.B .pag
+files are created; instead the name given with the
+.B \-o
+option directly names the SQLite FTS5 database file used by
+.BR pmsearch (1).
 .PP
 The
 .B \-V
